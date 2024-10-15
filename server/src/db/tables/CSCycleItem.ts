@@ -10,8 +10,10 @@ export const createCSCycleItemTableQueryStr = `
       cycle int not null REFERENCES dbo.CSCycle(Id),
       cycleDay tinyint not null,
       meal int not null REFERENCES dbo.MenuMeal(Id),
-      item int not null REFERENCES dbo.Item(Id),
+      item varchar(150) not null,
       createDate date not null,
+      createdBy int not null REFERENCES dbo.users(Id),
+      served int REFERENCES dbo.ItemServed(Id),
       isActive bit not null,
     );
   END
