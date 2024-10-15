@@ -41,8 +41,100 @@ export function startApi(port: number = 4000) {
     res.send({ message: "Tables created successfully." });
   });
 
-  app.post("/merge_cycle", async (req, res) => {
-    logger.api('Received request to "/merge_cycle" api endpoint');
+  app.post("/cycle/list", async (req, res) => {
+    logger.api('Received request to "/cycle/list" api endpoint');
+    let reqData = req.body;
+    logger.api("Req Data: ", reqData);
+    const requiredFields: string[] = ["hospital"];
+    let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
+    if (requiredFieldMissing) {
+      res
+        .status(400)
+        .send("Required input field missing: " + requiredFieldMissing);
+      return;
+    }
+    const queryStr = `
+    SELECT C.Id, C.name, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
+    FROM dbo.CSCycle as C
+    LEFT JOIN dbo.Hospital as H ON C.hospital = H.Id
+    LEFT JOIN dbo.users as U ON C.createdBy = U.Id
+    WHERE C.hospital = '${reqData.hospital}'
+    ;
+    `;
+    let resultQuery = await safeQuery(sql, queryStr);
+    if (!resultQuery.success) {
+      res.status(400).send({
+        message: "Problem processing query.",
+        error: resultQuery.result,
+      });
+      return;
+    }
+    res.send(resultQuery.result.recordset);
+  });
+
+  app.post("/cycle/detail", async (req, res) => {
+    logger.api('Received request to "/cycle/detail" api endpoint');
+    let reqData = req.body;
+    logger.api("Req Data: ", reqData);
+    const requiredFields: string[] = ["cycle"];
+    let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
+    if (requiredFieldMissing) {
+      res
+        .status(400)
+        .send("Required input field missing: " + requiredFieldMissing);
+      return;
+    }
+    const cycleDetailQueryStr = `
+    SELECT C.Id, C.name, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
+    FROM dbo.CSCycle as C
+    LEFT JOIN dbo.Hospital as H ON C.hospital = H.Id
+    LEFT JOIN dbo.users as U ON C.createdBy = U.Id
+    WHERE C.Id = '${reqData.cycle}'
+    ;
+    `;
+    let cycleQuery = await safeQuery(sql, cycleDetailQueryStr);
+    if (!cycleQuery.success) {
+      res.status(400).send({
+        message: "Problem processing query.",
+        error: cycleQuery.result,
+      });
+      return;
+    }
+    if (cycleQuery.result.recordset.length <= 0) {
+      res
+        .status(400)
+        .send("Could not find Chef Special Cycle with id " + reqData.cycle);
+      return;
+    }
+
+    const cycleItemsQueryStr = `
+    SELECT 
+      CI.Id, CI.cycle as cycleId, CI.cycleDay, CI.meal as mealId, M.MealDescription as mealName, 
+      CI.item, CI.createDate, CI.createdBy as createdById, U.Name, CI.served as servedId, S.ServedState as served, CI.isActive
+    FROM dbo.CSCycleItem as CI
+    LEFT JOIN dbo.MenuMeal as M ON CI.meal = M.Id
+    LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
+    LEFT JOIN dbo.ItemServed as S ON CI.served = S.Id
+    WHERE CI.cycle = '${reqData.cycle}'
+    ;
+    `;
+    let cycleItemsQuery = await safeQuery(sql, cycleItemsQueryStr);
+    if (!cycleItemsQuery.success) {
+      res.status(400).send({
+        message: "Problem processing query.",
+        error: cycleItemsQuery.result,
+      });
+      return;
+    }
+
+    res.send({
+      cycleInfo: cycleQuery.result.recordset[0],
+      cycleItems: cycleItemsQuery.result.recordset,
+    });
+  });
+
+  app.post("/cycle/merge", async (req, res) => {
+    logger.api('Received request to "/cycle/merge" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
     const requiredFields: string[] = [
