@@ -7,5 +7,10 @@ export interface CycleData {
   cycleName: string;
   startDate: string;
   daysInCycle: number;
-  mealTypes: string[];
+  meals: string[];
+}
+
+export interface Option {
+  value: number;
+  label: string;
 }

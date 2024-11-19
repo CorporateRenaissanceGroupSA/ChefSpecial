@@ -1,45 +1,54 @@
-import React from "react";
-import { Listbox } from "@headlessui/react";
+import React, { useState } from "react";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
+  SelectChangeEvent,
+} from "@mui/material";
 
 interface MultiSelectDropdownProps {
+  label?: string;
+  options: string[];
   selected: string[];
   setSelected: (selected: string[]) => void;
-  options: string[];
 }
 
 const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+  label = "Select Meals",
+  options,
   selected,
   setSelected,
-  options,
 }) => {
-  const toggleOption = (option: string) => {
+
+  const handleChange = (event: SelectChangeEvent<string[]>) => {
+    const {
+      target: { value },
+    } = event;
     setSelected(
-      selected.includes(option)
-        ? selected.filter((item) => item !== option)
-        : [...selected, option]
+      typeof value === "string" ? value.split(",") : (value as string[])
     );
   };
+
   return (
-    <Listbox as="div" className="relative">
-      <Listbox.Button className="p-2 border rounded-lg">
-        {selected.join(", ") || "Select Meal Types"}
-      </Listbox.Button>
-      <Listbox.Options className="absolute mt-1 w-full bg-white border rounded-lg shadow-lg">
+    <FormControl variant="standard" sx={{ width: 230 }}>
+      <InputLabel>{label}</InputLabel>
+      <Select
+        multiple
+        value={selected}
+        onChange={handleChange}
+        renderValue={(selected) => (selected as string[]).join(", ")}
+      >
         {options.map((option) => (
-          <Listbox.Option
-            key={option}
-            value={option}
-            onClick={() => toggleOption(option)}
-          >
-            {({ selected }) => (
-              <span className={`p-2 block ${selected ? "font-bold" : ""}`}>
-                {option}
-              </span>
-            )}
-          </Listbox.Option>
+          <MenuItem key={option} value={option}>
+            <ListItemText primary={option} />
+          </MenuItem>
         ))}
-      </Listbox.Options>
-    </Listbox>
+      </Select>
+    </FormControl>
   );
 };
 
