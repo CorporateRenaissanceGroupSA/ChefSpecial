@@ -3,9 +3,10 @@ const cors = require("cors");
 import { logger } from "../utils/logger";
 import { test } from "./test/test";
 import { checkRequiredFields, preparedQuery, safeQuery } from "./api-utils";
-import { sql } from "..";
+import { sql } from "../index";
 import { createCSCycleTableQueryStr } from "../db/tables/CSCycle";
 import { createCSCycleItemTableQueryStr } from "../db/tables/CSCycleItem";
+import { meal } from "./meal";
 
 export function startApi(port: number = 4000) {
   const app = express();
@@ -13,6 +14,7 @@ export function startApi(port: number = 4000) {
   app.use(express.json());
 
   app.use("/test", test);
+  app.use("/meal", meal);
 
   app.post("/create_tables", async (req, res) => {
     logger.api('Received request to "/create_tables" api endpoint');
@@ -45,7 +47,7 @@ export function startApi(port: number = 4000) {
     logger.api('Received request to "/cycle/list" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
-    const requiredFields: string[] = ["hospital"];
+    const requiredFields: string[] = ["hospitalId"];
     let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
     if (requiredFieldMissing) {
       res
@@ -54,11 +56,11 @@ export function startApi(port: number = 4000) {
       return;
     }
     const queryStr = `
-    SELECT C.Id, C.name, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
-    FROM dbo.CSCycle as C
-    LEFT JOIN dbo.Hospital as H ON C.hospital = H.Id
+    SELECT C.Id, C.name, C.cycleDays, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, U.name as CreatedByName, C.isActive 
+    FROM Ems.CSCycle as C
+    LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
     LEFT JOIN dbo.users as U ON C.createdBy = U.Id
-    WHERE C.hospital = '${reqData.hospital}'
+    WHERE C.hospitalId = '${reqData.hospitalId}'
     ;
     `;
     let resultQuery = await safeQuery(sql, queryStr);
@@ -69,7 +71,9 @@ export function startApi(port: number = 4000) {
       });
       return;
     }
-    res.send(resultQuery.result.recordset);
+    let result = resultQuery.result.recordset;
+    console.log("Result: ", result);
+    res.send(result);
   });
 
   app.post("/cycle/detail", async (req, res) => {
@@ -85,7 +89,7 @@ export function startApi(port: number = 4000) {
       return;
     }
     const cycleDetailQueryStr = `
-    SELECT C.Id, C.name, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
+    SELECT C.Id, C.name, C.cycleDays, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
     FROM dbo.CSCycle as C
     LEFT JOIN dbo.Hospital as H ON C.hospital = H.Id
     LEFT JOIN dbo.users as U ON C.createdBy = U.Id

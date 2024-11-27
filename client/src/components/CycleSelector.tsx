@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CycleData } from "../types";
 import MultiSelectDropdown from "./MultiSelectDropdown";
 import { ViewColumnsIcon } from "@heroicons/react/24/outline";
@@ -9,47 +9,69 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
 
-import CreatableSelect from "./CreatableSelect";
-
+import CreatableSelect, { SelectOption } from "./CreatableSelect";
+import axios from "axios";
 
 interface CycleSelectorProps {
-  cycleData: CycleData;
-  setCycleData: React.Dispatch<React.SetStateAction<CycleData>>;
+  allCycles: CycleData[];
+  currentCycle: CycleData | undefined;
+  appCycleSelect: (option: SelectOption | null) => void;
 }
 
-const options = [
-  { value: "Spring 2024", label: "Spring2024" },
-  { value: "Winter 2024", label: "Winter024" },
-];
+function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
+  if (cycleData) {
+    return { label: cycleData!.name, value: cycleData!.Id.toString() };
+  } else {
+    return null;
+  }
+}
 
+// const options = [
+//   { value: "Spring 2024", label: "Spring2024" },
+//   { value: "Winter 2024", label: "Winter024" },
+// ];
 
 const CycleSelector: React.FC<CycleSelectorProps> = ({
-  cycleData,
-  setCycleData,
+  allCycles,
+  currentCycle,
+  appCycleSelect,
 }) => {
-  const handleInputChange = (field: string, value: any) => {
-    setCycleData((prev) => ({ ...prev, [field]: value }));
-    console.log(cycleData);
+  const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
+  const [currentCycleOption, setCurrentCycleOption] =
+    useState<SelectOption | null>(null);
+
+  useEffect(() => {
+    let newOptions = allCycles.map(
+      (cycleData) => cycleToOption(cycleData) as SelectOption
+    );
+    console.log("Cycle options updated: ", newOptions);
+    setAllCycleOptions(newOptions);
+  }, [allCycles]);
+
+  useEffect(() => {
+    console.log("Changing current cycle option: ", currentCycle);
+    setCurrentCycleOption(cycleToOption(currentCycle));
+  }, [currentCycle]);
+
+  const handleCycleInputChange = (option: SelectOption | null) => {
+    console.log("Detected cycle option change: ", option);
+    appCycleSelect(option);
   };
 
-  const [dynamicOptions, setDynamicOptions] = useState(options);
+  const handleInputChange = (field: string, value: any) => {
+    // setCycleData((prev) => ({ ...prev, [field]: value }));
+    console.log("Field: " + field + " Value: " + value);
+  };
+  // const [dynamicOptions, setDynamicOptions] = useState(options);
 
   return (
     <div>
       <div className="grid grid-cols-7 space-x-4 p-4">
         <CreatableSelect
-          options={dynamicOptions}
-          value={dynamicOptions.find(
-            (option) => option.value === cycleData.cycleName
-          ) || null}
+          options={allCycleOptions}
+          value={currentCycleOption}
           onChange={(newOption) => {
-            if (
-              newOption &&
-              !dynamicOptions.some((opt) => opt.value === newOption.value)
-            ) {
-              setDynamicOptions([...dynamicOptions, newOption]);
-            }
-            handleInputChange("cycleName", newOption ? newOption.value : "");
+            handleCycleInputChange(newOption);
           }}
           placeholder="Cycle Name"
         />

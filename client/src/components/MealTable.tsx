@@ -60,7 +60,7 @@ const MealTable: React.FC<MealTableProps> = ({
     );
   }, [daysInCycle]);
 
-   const prevMealsRef = useRef<Meal[]>([]);
+  const prevMealsRef = useRef<Meal[]>([]);
 
   // Notify parent when row data changes
   useEffect(() => {
@@ -71,8 +71,6 @@ const MealTable: React.FC<MealTableProps> = ({
         days: row.data,
       }));
     // onUpdate(mealType, validMeals);
-
-   
 
     if (JSON.stringify(validMeals) !== JSON.stringify(prevMealsRef.current)) {
       prevMealsRef.current = validMeals; // Update ref with new validMeals

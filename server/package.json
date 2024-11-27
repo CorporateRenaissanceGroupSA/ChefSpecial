@@ -5,9 +5,12 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "check-env": "node check-env.js",
     "build": "tsc",
-    "start": "npm run build && node lib/index.js"
+    "watch": "tsc -watch",
+    "start": "npm run check-env && npm run build && node lib/index.js",
+    "startdev": "npm run watch && nodemon lib/index.js",
+    "startserver": "ts-node ."
   },
   "keywords": [],
   "author": "",

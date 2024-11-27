@@ -4,10 +4,14 @@ export interface Meal {
 }
 
 export interface CycleData {
-  cycleName: string;
+  Id: number;
+  hospitalId: number;
+  name: string;
+  cycleDays: number;
   startDate: string;
-  daysInCycle: number;
-  meals: string[];
+  createtAt: string;
+  createdBy: number;
+  isActive: boolean;
 }
 
 export interface Option {
