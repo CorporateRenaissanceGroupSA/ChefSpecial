@@ -16,6 +16,7 @@ interface CycleSelectorProps {
   allCycles: CycleData[];
   currentCycle: CycleData | undefined;
   appCycleSelect: (option: SelectOption | null) => void;
+  appCycleDataChange: (field: string, value: any) => void;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -35,6 +36,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   allCycles,
   currentCycle,
   appCycleSelect,
+  appCycleDataChange,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
@@ -60,7 +62,8 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
 
   const handleInputChange = (field: string, value: any) => {
     // setCycleData((prev) => ({ ...prev, [field]: value }));
-    console.log("Field: " + field + " Value: " + value);
+    console.log("Cycle data change: Field: " + field + " Value: " + value);
+    appCycleDataChange(field, value);
   };
   // const [dynamicOptions, setDynamicOptions] = useState(options);
 
@@ -82,9 +85,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DemoContainer components={["DatePicker", "DatePicker"]}>
               <DatePicker
-                defaultValue={dayjs(new Date())}
+                defaultValue={dayjs(
+                  currentCycle?.startDate || new Date().toJSON()
+                )}
                 onChange={(date: Dayjs | null) =>
-                  handleInputChange("startDate", date ? date.toISOString() : "")
+                  handleInputChange("startDate", date ? date.toJSON() : "")
                 }
                 label="Cycle Start Date"
               />
@@ -99,11 +104,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           variant="standard"
           onChange={(e) =>
             handleInputChange(
-              "daysInCycle",
+              "cycleDays",
               e.target.value ? Number(e.target.value) : 0
             )
           }
-          defaultValue={8}
+          value={currentCycle?.cycleDays}
           placeholder=""
           slotProps={{
             inputLabel: {

@@ -1,7 +1,7 @@
 import { sql } from "../index";
 import { logger } from "../utils/logger";
 import express = require("express");
-import { checkRequiredFields, safeQuery } from "./api-utils";
+import { checkRequiredFields, safeQuery } from "../utils/api-utils";
 
 export const meal = express.Router();
 

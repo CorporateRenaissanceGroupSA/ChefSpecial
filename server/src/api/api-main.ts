@@ -2,11 +2,18 @@ import express = require("express");
 const cors = require("cors");
 import { logger } from "../utils/logger";
 import { test } from "./test/test";
-import { checkRequiredFields, preparedQuery, safeQuery } from "./api-utils";
 import { sql } from "../index";
 import { createCSCycleTableQueryStr } from "../db/tables/CSCycle";
 import { createCSCycleItemTableQueryStr } from "../db/tables/CSCycleItem";
 import { meal } from "./meal";
+import {
+  checkDates,
+  checkRequiredFields,
+  createMergeQuery,
+  FieldInfo,
+  getRequiredFields,
+  safeQuery,
+} from "../utils/api-utils";
 
 export function startApi(port: number = 4000) {
   const app = express();
@@ -80,7 +87,7 @@ export function startApi(port: number = 4000) {
     logger.api('Received request to "/cycle/detail" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
-    const requiredFields: string[] = ["cycle"];
+    const requiredFields: string[] = ["Id"];
     let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
     if (requiredFieldMissing) {
       res
@@ -89,11 +96,11 @@ export function startApi(port: number = 4000) {
       return;
     }
     const cycleDetailQueryStr = `
-    SELECT C.Id, C.name, C.cycleDays, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
-    FROM dbo.CSCycle as C
-    LEFT JOIN dbo.Hospital as H ON C.hospital = H.Id
+    SELECT C.Id, C.name, C.cycleDays, C.hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
+    FROM Ems.CSCycle as C
+    LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
     LEFT JOIN dbo.users as U ON C.createdBy = U.Id
-    WHERE C.Id = '${reqData.cycle}'
+    WHERE C.Id = '${reqData.Id}'
     ;
     `;
     let cycleQuery = await safeQuery(sql, cycleDetailQueryStr);
@@ -107,33 +114,33 @@ export function startApi(port: number = 4000) {
     if (cycleQuery.result.recordset.length <= 0) {
       res
         .status(400)
-        .send("Could not find Chef Special Cycle with id " + reqData.cycle);
+        .send("Could not find Chef Special Cycle with id " + reqData.Id);
       return;
     }
 
-    const cycleItemsQueryStr = `
-    SELECT 
-      CI.Id, CI.cycle as cycleId, CI.cycleDay, CI.meal as mealId, M.MealDescription as mealName, 
-      CI.item, CI.createDate, CI.createdBy as createdById, U.Name, CI.served as servedId, S.ServedState as served, CI.isActive
-    FROM dbo.CSCycleItem as CI
-    LEFT JOIN dbo.MenuMeal as M ON CI.meal = M.Id
-    LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
-    LEFT JOIN dbo.ItemServed as S ON CI.served = S.Id
-    WHERE CI.cycle = '${reqData.cycle}'
-    ;
-    `;
-    let cycleItemsQuery = await safeQuery(sql, cycleItemsQueryStr);
-    if (!cycleItemsQuery.success) {
-      res.status(400).send({
-        message: "Problem processing query.",
-        error: cycleItemsQuery.result,
-      });
-      return;
-    }
+    // const cycleItemsQueryStr = `
+    // SELECT
+    //   CI.Id, CI.cycle as cycleId, CI.cycleDay, CI.meal as mealId, M.MealDescription as mealName,
+    //   CI.item, CI.createDate, CI.createdBy as createdById, U.Name, CI.served as servedId, S.ServedState as served, CI.isActive
+    // FROM Ems.CSCycleItem as CI
+    // LEFT JOIN dbo.MenuMeal as M ON CI.meal = M.Id
+    // LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
+    // LEFT JOIN dbo.ItemServed as S ON CI.served = S.Id
+    // WHERE CI.cycle = '${reqData.Id}'
+    // ;
+    // `;
+    // let cycleItemsQuery = await safeQuery(sql, cycleItemsQueryStr);
+    // if (!cycleItemsQuery.success) {
+    //   res.status(400).send({
+    //     message: "Problem processing query.",
+    //     error: cycleItemsQuery.result,
+    //   });
+    //   return;
+    // }
 
     res.send({
       cycleInfo: cycleQuery.result.recordset[0],
-      cycleItems: cycleItemsQuery.result.recordset,
+      // cycleItems: cycleItemsQuery.result.recordset,
     });
   });
 
@@ -141,45 +148,51 @@ export function startApi(port: number = 4000) {
     logger.api('Received request to "/cycle/merge" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
-    const requiredFields: string[] = [
-      "hospital",
-      "name",
-      "startDate",
-      "createdBy",
-      "isActive",
+    const cycleFields: FieldInfo[] = [
+      new FieldInfo("Id", "number", true),
+      new FieldInfo("hospitalId", "number", true),
+      new FieldInfo("name", "other", true),
+      new FieldInfo("cycleDays", "number", true),
+      new FieldInfo("startDate", "date", false),
+      new FieldInfo("createdBy", "number", false),
+      new FieldInfo("isActive", "other", false),
     ];
-    let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
+
+    let requiredFieldMissing = checkRequiredFields(
+      reqData,
+      getRequiredFields(cycleFields)
+    );
     if (requiredFieldMissing) {
+      logger.error("Required input field missing: " + requiredFieldMissing);
       res
         .status(400)
         .send("Required input field missing: " + requiredFieldMissing);
       return;
     }
-    let startDate = new Date(reqData.startDate);
-    if (startDate.toString() == "Invalid Date") {
+    let errorField = checkDates(reqData, cycleFields);
+    if (errorField) {
       res
         .status(400)
         .send(
-          "startDate cannot be converted to a valid date." + reqData.startDate
+          errorField.name +
+            " cannot be converted to a valid date." +
+            reqData[errorField.name]
         );
+      return;
     }
-    let values = {
-      Id: `${reqData.Id ? reqData.Id : "-1"}`,
-      hospital: reqData.hospital,
-      name: reqData.name,
-      startDate: startDate.toJSON(),
-      createdBy: reqData.createdBy,
-      isActive: reqData.isActive,
-    };
-    const mergeCycleQuery1 = `
-    MERGE dbo.CSCycle AS Target
-    USING (SELECT ${values.Id} Id, '${values.hospital}' hospital, '${values.name}' name, '${values.startDate}' startDate, '${values.createdBy}' createdBy, '${values.isActive}' isActive) AS Source
-    ON (Target.Id = Source.Id)
-    WHEN MATCHED THEN UPDATE SET Target.hospital = Source.hospital, Target.name = Source.name, Target.startDate = Source.startDate, Target.createdBy = Source.createdBy, Target.isActive = Source.isActive
-    WHEN NOT MATCHED THEN INSERT (hospital, name, startDate, createDate, createdBy, isActive) VALUES (source.hospital, source.name, source.startDate, GETDATE(), source.createdBy, source.isActive)
-    ;
-    `;
-    let mergeCycleQuery = await safeQuery(sql, mergeCycleQuery1);
+
+    const mergeCycleQueryString = createMergeQuery(
+      "Ems.CSCycle",
+      reqData,
+      cycleFields
+    );
+    logger.debug("Merge Cycle query string: ", mergeCycleQueryString);
+    let mergeCycleQuery = await safeQuery(sql, mergeCycleQueryString);
+    // let mergeLeadQuery = {
+    //   success: true,
+    //   result: {},
+    //   queryString: mergeLeadQueryString,
+    // };
     if (!mergeCycleQuery.success) {
       res.status(400).send({
         message: "Problem processing query.",
@@ -188,7 +201,16 @@ export function startApi(port: number = 4000) {
       });
       return;
     }
-    res.send(mergeCycleQuery);
+    logger.debug("Merge Cycle query result: ", mergeCycleQuery);
+    let id;
+    if (reqData.Id == "null" || !reqData.Id) {
+      id = mergeCycleQuery.result.recordset[0].Id;
+    } else {
+      id = reqData.Id;
+    }
+    res.send({
+      Id: id,
+    });
   });
 
   app.post("/merge_cycle_item", async (req, res) => {

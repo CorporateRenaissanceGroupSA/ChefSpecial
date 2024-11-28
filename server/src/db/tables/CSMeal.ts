@@ -1,4 +1,4 @@
-import { safeQuery } from "../../api/api-utils";
+import { safeQuery } from "../../utils/api-utils";
 
 export const createCSMealTableQueryStr = `
   IF (NOT EXISTS (
