@@ -13,7 +13,6 @@ export const createCSCycleItemTableQueryStr = `
       cycleDay tinyint not null,
       createDate datetime DEFAULT GETDATE(),
       createdBy int REFERENCES dbo.users(Id),
-      servedId int REFERENCES dbo.ItemServed(Id),
       isActive bit DEFAULT 'true',
     );
   END

@@ -1,24 +1,64 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
-import { options } from "./MealTable";
-import { Option } from "../types";
-
-
+import { Meal, Option } from "../types";
 
 interface MealDropdownProps {
-  value: Option | null;
-  onChange: (selectedOption: Option | null) => void;
+  allMeals: Meal[];
+  selectedMeal: Meal | null;
+  onChange: (newMeal: Meal | null) => void;
 }
 
+function mealToOption(meal: Meal | null): Option | null {
+  if (meal) {
+    return {
+      value: meal.Id,
+      label: meal.name,
+    };
+  } else {
+    return null;
+  }
+}
 
+function optionToMeal(option: Option | null): Meal | null {
+  if (!option || option.value === 0) {
+    return null;
+  } else {
+    return {
+      Id: option.value,
+      name: option.label,
+    };
+  }
+}
 
-const MealDropdown: React.FC<MealDropdownProps> = ({ value, onChange }) => {
+const MealDropdown: React.FC<MealDropdownProps> = ({
+  allMeals,
+  selectedMeal,
+  onChange,
+}) => {
+  const [options, setOptions] = useState<Option[]>([]);
+  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
+
+  useEffect(() => {
+    let newOptions: Option[] = [];
+    allMeals.forEach((meal) => {
+      let newOption = mealToOption(meal);
+      if (newOption) {
+        newOptions.push(newOption);
+      }
+    });
+    setOptions(newOptions);
+  }, [allMeals]);
+
+  useEffect(() => {
+    setSelectedOption(mealToOption(selectedMeal));
+  }, [selectedMeal]);
+
   return (
     <Select
       options={options}
-      value={value}
+      value={selectedOption}
       onChange={(selectedOption: SingleValue<Option>) =>
-        onChange(selectedOption)
+        onChange(optionToMeal(selectedOption))
       }
       isClearable
     />

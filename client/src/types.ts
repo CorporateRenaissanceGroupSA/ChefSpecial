@@ -1,5 +1,19 @@
 export interface Meal {
+  Id: number;
   name: string;
+}
+
+export interface MealType {
+  Id: number;
+  name: string;
+}
+
+export interface MealDays {
+  cycleId: number;
+  mealTypeId: number;
+  mealTypeName: string;
+  mealId: number;
+  mealName: string;
   days: boolean[];
 }
 

@@ -1,5 +1,48 @@
 import axios from "axios";
-import { CycleData } from "../types";
+import { CycleData, MealDays, MealType } from "../types";
+
+export async function getMealsList(hospitalId: number): Promise<MealType[]> {
+  let result: CycleData[] = [];
+  try {
+    let response = await axios.post(`${process.env.REACT_APP_API}/meal/list`, {
+      hospitalId,
+    });
+    console.log("Meal list response: ", response);
+    if (response.status === 200) {
+      result = response.data.meals.map((mealData: any) => {
+        return {
+          Id: mealData.Id,
+          name: mealData.name,
+        };
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
+}
+
+export async function getMealTypeList(): Promise<MealType[]> {
+  let result: CycleData[] = [];
+  try {
+    let response = await axios.post(
+      `${process.env.REACT_APP_API}/meal-types`,
+      {}
+    );
+    console.log("Meal Type list response: ", response);
+    if (response.status === 200) {
+      result = response.data.map((mealTypeData: any) => {
+        return {
+          Id: mealTypeData.Id,
+          name: mealTypeData.mealType,
+        };
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
+}
 
 export async function getCycleList(hospitalId: number): Promise<CycleData[]> {
   let result: CycleData[] = [];
@@ -17,13 +60,75 @@ export async function getCycleList(hospitalId: number): Promise<CycleData[]> {
   return result;
 }
 
-export async function mergeCycle(
+export async function getCycleDetail(
+  cycleId: number
+): Promise<{ cycleInfo: CycleData; mealDaysList: MealDays[] } | undefined> {
+  console.log("Getting detail for cycle: " + cycleId);
+  let apiResult = await axios.post(
+    `${process.env.REACT_APP_API}/cycle/detail`,
+    { Id: cycleId }
+  );
+  console.log("Cycle detail apiResult: ", apiResult);
+  if (apiResult.status !== 200) {
+    console.error(
+      "Problem getting cycle details for cycleId: " + cycleId,
+      apiResult
+    );
+    return undefined;
+  }
+  let mealDaysMap: Map<string, MealDays> = new Map();
+  if (apiResult.data.cycleItems) {
+    apiResult.data.cycleItems.forEach((cycleItem: any) => {
+      let uniqueId =
+        cycleItem.cycleId + ":" + cycleItem.mealTypeId + ":" + cycleItem.mealId;
+      let existingMealDays = mealDaysMap.get(uniqueId);
+      if (!existingMealDays) {
+        existingMealDays = {
+          cycleId: cycleItem.cycleId,
+          mealTypeId: cycleItem.mealTypeId,
+          mealTypeName: cycleItem.mealType,
+          mealId: cycleItem.mealId,
+          mealName: cycleItem.meal,
+          days: [],
+        };
+      }
+      existingMealDays.days[cycleItem.cycleDay] = cycleItem.isActive == "true";
+      mealDaysMap.set(uniqueId, existingMealDays);
+    });
+  }
+  let mealDaysList = Array.from(mealDaysMap.values());
+  let result = {
+    cycleInfo: apiResult.data.cycleInfo,
+    mealDaysList,
+  };
+  console.log("Cycle detail result: ", result);
+  return result;
+}
+
+export async function mergeCycleInfo(
   cycle: CycleData
-): Promise<CycleData | undefined> {
+): Promise<number | undefined> {
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/cycle/merge-info`,
+      cycle
+    );
+    console.log("Cycle merge info apiResult: ", apiResult);
+    return apiResult.data.Id;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function mergeMealDays(
+  cycle: CycleData,
+  mealDays: MealDays
+): Promise<void> {
   let response;
+  const mergeItemInput = {};
   try {
     let api1Result = await axios.post(
-      `${process.env.REACT_APP_API}/cycle/merge`,
+      `${process.env.REACT_APP_API}/cycle/merge-item`,
       cycle
     );
     console.log("Cycle merge apiResult: ", api1Result);

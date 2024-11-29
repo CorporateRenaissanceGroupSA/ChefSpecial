@@ -11,8 +11,9 @@ export const createCSMealTableQueryStr = `
       Id int IDENTITY(1,1) PRIMARY KEY,
       name varchar(100) not null,
       description varchar(250),
+      servedId int REFERENCES dbo.ItemServed,
       hospitalId int REFERENCES dbo.Hospital(Id) not null,
-      createDate datetime DEFAULT GETDATE(),
+      createdAt datetime DEFAULT GETDATE(),
       createdBy int REFERENCES dbo.users(Id),
       isActive bit DEFAULT 'true',
     );
@@ -20,36 +21,9 @@ export const createCSMealTableQueryStr = `
 `;
 
 export const insertValuesCSMealQueryStr = `
-INSERT INTO Ems.CSMeal (name, description, hospitalId, isActive)
+INSERT INTO Ems.CSMeal (name, description, servedId, hospitalId, isActive)
 VALUES
-('Yummy Breakfast', '', 1, 'true'),
-('Standard Lunch', 'A standard lunch option.', 1, 'true'),
-('Burger and Chips', '', 1, 'true')
+('Yummy Breakfast', '', 1, 1, 'true'),
+('Standard Lunch', 'A standard lunch option.', 1, 1, 'true'),
+('Burger and Chips', '', 1, 1, 'true')
 `;
-
-export async function addCsMealEntries(sql: any) {
-  await CSMealEntry(sql, 1, "Yummy Breakfast");
-  await CSMealEntry(sql, 1, "Standard Lunch");
-  await CSMealEntry(sql, 1, "Burger and Chips");
-}
-
-async function CSMealEntry(
-  sql: any,
-  hospitalId: number,
-  name: string,
-  description: string = ""
-) {
-  const queryString = `
-  INSERT INTO Ems.CSMeal (name, description, hospitalId) 
-  VALUES ('${name}', '${description}', ${hospitalId})
-  `;
-  let queryResult = await safeQuery(sql, queryString);
-  if (!queryResult.success) {
-    console.error(
-      "Could not add CSMeal entry: ",
-      queryResult.result,
-      queryResult.queryString
-    );
-    throw new Error("Could not add CSMeal entry.");
-  }
-}
