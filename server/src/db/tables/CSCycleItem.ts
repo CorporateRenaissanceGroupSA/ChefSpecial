@@ -7,7 +7,7 @@ export const createCSCycleItemTableQueryStr = `
   BEGIN
     CREATE TABLE Ems.CSCycleItem (
       Id int IDENTITY(1,1) PRIMARY KEY,
-      cycleId int not null REFERENCES dbo.CSCycle(Id),
+      cycleId int not null REFERENCES Ems.CSCycle(Id),
       mealTypeId int not null REFERENCES dbo.MenuMeal(Id),
       mealId int not null REFERENCES Ems.CSMeal(Id),
       cycleDay tinyint not null,
