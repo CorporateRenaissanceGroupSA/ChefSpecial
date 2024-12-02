@@ -105,6 +105,65 @@ export async function getCycleDetail(
   return result;
 }
 
+export async function getCycleMealTypeItems(
+  cycleId: number,
+  cycleDays: number,
+  mealTypeId: number
+): Promise<{ mealDaysList: MealDays[] } | undefined> {
+  console.log(
+    "Getting items for cycle " +
+      cycleId +
+      " with cycleDays " +
+      cycleDays +
+      " and mealType " +
+      mealTypeId
+  );
+  let apiResult = await axios.post(
+    `${process.env.REACT_APP_API}/cycle/meal-type/meal-days`,
+    { cycleId, mealTypeId }
+  );
+  console.log("Cycle MealType items apiResult: ", apiResult);
+  if (apiResult.status !== 200) {
+    console.error(
+      "Problem getting cycle mealType details for cycleId: " +
+        cycleId +
+        " MealTypeId: " +
+        mealTypeId,
+      apiResult
+    );
+    return undefined;
+  }
+  let mealDaysMap: Map<string, MealDays> = new Map();
+  if (apiResult.data.mealItems) {
+    apiResult.data.mealItems.forEach((mealItem: any) => {
+      let uniqueId =
+        mealItem.cycleId + ":" + mealItem.mealTypeId + ":" + mealItem.mealId;
+      let existingMealDays = mealDaysMap.get(uniqueId);
+      if (!existingMealDays) {
+        existingMealDays = {
+          cycleId: mealItem.cycleId,
+          mealTypeId: mealItem.mealTypeId,
+          mealTypeName: mealItem.mealType,
+          mealId: mealItem.mealId,
+          mealName: mealItem.mealName,
+          days: Array(cycleDays).fill(false),
+        };
+      }
+      if (mealItem.cycleDay < cycleDays) {
+        existingMealDays.days[mealItem.cycleDay] =
+          mealItem.isActive === true || mealItem.isActive === "true";
+      }
+      mealDaysMap.set(uniqueId, existingMealDays);
+    });
+  }
+  let mealDaysList = Array.from(mealDaysMap.values());
+  let result = {
+    mealDaysList,
+  };
+  console.log("Cycle MealType items result: ", result);
+  return result;
+}
+
 export async function mergeCycleInfo(
   cycle: CycleData
 ): Promise<number | undefined> {
@@ -115,6 +174,32 @@ export async function mergeCycleInfo(
     );
     console.log("Cycle merge info apiResult: ", apiResult);
     return apiResult.data.Id;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function mergeMealDay(
+  cycleId: number,
+  mealTypeId: number,
+  mealId: number,
+  dayIndex: number,
+  active: boolean
+): Promise<void> {
+  let response;
+  const mergeItemInput = {
+    cycleId,
+    mealTypeId,
+    mealId,
+    cycleDay: dayIndex,
+    isActive: active,
+  };
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/cycle/merge-item`,
+      mergeItemInput
+    );
+    console.log("Cycle item merge apiResult: ", apiResult);
   } catch (error) {
     console.error(error);
   }

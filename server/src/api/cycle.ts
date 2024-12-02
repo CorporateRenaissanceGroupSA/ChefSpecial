@@ -105,11 +105,14 @@ cycle.post("/detail", async (req, res) => {
   });
 });
 
-cycle.post("/meal-days", async (req, res) => {
-  logger.api('Received request to "/cycle/meal-days" api endpoint');
+cycle.post("/meal-type/meal-days", async (req, res) => {
+  logger.api('Received request to "/cycle/meal-type/meal-days" api endpoint');
   let reqData = req.body;
   logger.api("Req Data: ", reqData);
-  let requiredFieldMissing = checkRequiredFields(reqData, ["cycleId"]);
+  let requiredFieldMissing = checkRequiredFields(reqData, [
+    "cycleId",
+    "mealTypeId",
+  ]);
   if (requiredFieldMissing) {
     logger.error("Required input field missing: " + requiredFieldMissing);
     res
@@ -117,6 +120,24 @@ cycle.post("/meal-days", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
+  const queryStr = `
+    SELECT
+    CI.*, MT.mealDescription as mealType, M.name as mealName, M.description as mealDescription, U.name as createdByName
+    FROM Ems.CSCycleItem as CI
+    LEFT JOIN dbo.MenuMeal as MT ON CI.mealTypeId = MT.Id
+    LEFT JOIN Ems.CSMeal as M ON CI.mealId = M.Id
+    LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
+    WHERE CI.cycleId = '${reqData.cycleId}' AND CI.MealTypeId = '${reqData.mealTypeId}'
+    `;
+  let query = await safeQuery(sql, queryStr);
+  if (!query.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: query.result,
+    });
+    return;
+  }
+  res.send({ mealItems: query.result.recordset });
 });
 
 cycle.post("/merge-info", async (req, res) => {
@@ -193,11 +214,11 @@ cycle.post("/merge-item", async (req, res) => {
   let reqData = req.body;
   logger.api("Req Data: ", reqData);
   const cycleFields: FieldInfo[] = [
-    new FieldInfo("Id", "number", true),
-    new FieldInfo("cycleId", "number", true),
-    new FieldInfo("mealTypeId", "number", true),
-    new FieldInfo("mealId", "number", true),
-    new FieldInfo("cycleDay", "number", true),
+    new FieldInfo("Id", "number", false),
+    new FieldInfo("cycleId", "number", true, "", true),
+    new FieldInfo("mealTypeId", "number", true, "", true),
+    new FieldInfo("mealId", "number", true, "", true),
+    new FieldInfo("cycleDay", "number", true, "", true),
     new FieldInfo("createdBy", "number", false),
     new FieldInfo("isActive", "other", false),
   ];
@@ -226,7 +247,7 @@ cycle.post("/merge-item", async (req, res) => {
   }
 
   const mergeCycleQueryString = createMergeQuery(
-    "Ems.CSCycle",
+    "Ems.CSCycleItem",
     reqData,
     cycleFields
   );
@@ -264,10 +285,10 @@ cycle.post("/merge-items", async (req, res) => {
   for (const itemData of reqData.items) {
     const cycleFields: FieldInfo[] = [
       new FieldInfo("Id", "number", true),
-      new FieldInfo("cycleId", "number", true),
-      new FieldInfo("mealTypeId", "number", true),
-      new FieldInfo("mealId", "number", true),
-      new FieldInfo("cycleDay", "number", true),
+      new FieldInfo("cycleId", "number", true, "", true),
+      new FieldInfo("mealTypeId", "number", true, "", true),
+      new FieldInfo("mealId", "number", true, "", true),
+      new FieldInfo("cycleDay", "number", true, "", true),
       new FieldInfo("createdBy", "number", false),
       new FieldInfo("isActive", "other", false),
     ];

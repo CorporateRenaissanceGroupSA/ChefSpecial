@@ -46,6 +46,7 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
         newOptions.push(newOption);
       }
     });
+    console.log("All Meal options: ", newOptions);
     setOptions(newOptions);
   }, [allMeals]);
 

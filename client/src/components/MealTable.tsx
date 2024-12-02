@@ -14,6 +14,11 @@ import {
 import MealDropdown from "./MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { CycleData, Meal, MealDays, MealType, Option } from "../types";
+import {
+  getCycleMealTypeItems,
+  mergeMealDay,
+  mergeMealDays,
+} from "../utils/db-utils";
 
 interface MealTableProps {
   cycle: CycleData;
@@ -67,6 +72,31 @@ const MealTable: React.FC<MealTableProps> = ({
   // State to manage rows
   const [rows, setRows] = useState<RowData[]>(rowsFromMealDays(mealDaysList));
 
+  useEffect(() => {
+    getCycleMealTypeItems(cycle.Id, cycle.cycleDays, mealType.Id).then(
+      (result) => {
+        if (result && result.mealDaysList) {
+          let validMealDaysList = result.mealDaysList.filter(
+            (mealDays) => mealDays.mealName && mealDays.days.some((day) => day)
+          );
+          // {
+          //   let atLeastOneDayActive = mealDays.days.find((day) => day === true);
+          //   if (mealDays.mealId > 0 && atLeastOneDayActive) {
+          //     return true;
+          //   } else {
+          //     return false;
+          //   }
+          // });
+          let newRows = rowsFromMealDays(validMealDaysList);
+          console.log("New rows: ", newRows);
+          setRows(newRows);
+        } else {
+          setRows([]);
+        }
+      }
+    );
+  }, [cycle.Id, cycle.cycleDays, mealType.Id]);
+
   // Update row data when daysInCycle changes
   useEffect(() => {
     // TODO check with user whether they are sure to lose data when days are reduced
@@ -78,18 +108,18 @@ const MealTable: React.FC<MealTableProps> = ({
     );
   }, [cycle.cycleDays]);
 
-  const prevMealsRef = useRef<MealDays[]>([]);
+  // const prevMealsRef = useRef<MealDays[]>([]);
 
   // Notify parent when row data changes
-  useEffect(() => {
-    const validMeals = rows
-      .filter((row) => row.mealName && row.days.some((day) => day)) // Only include rows with a meal name and at least one checked day
-      .map((row) => ({
-        name: row.mealName,
-        days: row.days,
-      }));
-    // onUpdate(mealType, validMeals);
-  }, [rows]);
+  // useEffect(() => {
+  //   const validMeals = rows
+  //     .filter((row) => row.mealName && row.days.some((day) => day)) // Only include rows with a meal name and at least one checked day
+  //     .map((row) => ({
+  //       name: row.mealName,
+  //       days: row.days,
+  //     }));
+  //   // onUpdate(mealType, validMeals);
+  // }, [rows]);
 
   const handleAddRow = () => {
     console.log("Add row handler called.");
@@ -104,31 +134,74 @@ const MealTable: React.FC<MealTableProps> = ({
     ]);
   };
 
-  const handleCheckboxChange = (rowId: number, dayIndex: number) => {
-    console.log("Check box handler called.", rowId, dayIndex);
+  const handleCheckboxChange = async (
+    currentRow: RowData,
+    dayIndex: number
+  ) => {
+    console.log("Check box handler called.", currentRow.rowId, dayIndex);
+
+    currentRow.days = currentRow.days.map((checked: boolean, index: number) =>
+      index === dayIndex ? !checked : checked
+    );
     setRows((prevRows) =>
-      prevRows.map((row: RowData) =>
-        row.mealId === rowId
-          ? {
-              ...row,
-              days: row.days.map((checked: boolean, index: number) =>
-                index === dayIndex ? !checked : checked
-              ),
-            }
-          : row
-      )
+      prevRows.map((row) => (row.rowId === currentRow.rowId ? currentRow : row))
+    );
+    await mergeMealDay(
+      cycle.Id,
+      mealType.Id,
+      currentRow.mealId,
+      dayIndex,
+      currentRow.days[dayIndex]
     );
   };
 
-  const handleMealChange = (
-    rowId: number,
-    mealId: number,
-    mealName: string
+  const handleMealChange = async (
+    currentRow: RowData,
+    newMealId: number,
+    newMealName: string
   ) => {
-    console.log("Meal change handler called.", rowId, mealId, mealName);
-    // setRows((prevRows) =>
-    //   prevRows.map((row) => (row.id === rowId ? { ...row, mealName } : row))
-    // );
+    console.log(
+      "Meal change handler called.",
+      currentRow,
+      newMealId,
+      newMealName
+    );
+    console.log("Rows before change: ", rows);
+    // first set all days as false for the old row in the DB
+    if (currentRow.mealId && currentRow.days) {
+      let index = 0;
+      while (index < currentRow.days.length) {
+        await mergeMealDay(
+          cycle.Id,
+          mealType.Id,
+          currentRow.mealId,
+          index,
+          false
+        );
+        index++;
+      }
+    }
+
+    currentRow.mealId = newMealId;
+    currentRow.mealName = newMealName;
+    if (newMealId && currentRow.days) {
+      let index = 0;
+      while (index < currentRow.days.length) {
+        await mergeMealDay(
+          cycle.Id,
+          mealType.Id,
+          currentRow.mealId,
+          index,
+          currentRow.days[index]
+        );
+        index++;
+      }
+    }
+    let newRows = rows.map((prevRow) =>
+      prevRow.rowId === currentRow.rowId ? currentRow : prevRow
+    );
+    console.log("Rows after change: ", newRows);
+    setRows(newRows);
   };
 
   const dayHeaders = Array.from(
@@ -164,7 +237,7 @@ const MealTable: React.FC<MealTableProps> = ({
                     selectedMeal={{ Id: row.mealId, name: row.mealName }}
                     onChange={(newMeal) =>
                       handleMealChange(
-                        row.rowId,
+                        row,
                         newMeal ? newMeal.Id : 0,
                         newMeal ? newMeal.name : ""
                       )
@@ -175,9 +248,7 @@ const MealTable: React.FC<MealTableProps> = ({
                   <TableCell key={dayIndex} align="center">
                     <Checkbox
                       checked={checked}
-                      onChange={() =>
-                        handleCheckboxChange(row.mealId, dayIndex)
-                      }
+                      onChange={() => handleCheckboxChange(row, dayIndex)}
                     />
                     {/* Placeholder cell content, can be updated to display other data */}
                   </TableCell>
