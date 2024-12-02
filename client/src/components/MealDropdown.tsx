@@ -8,6 +8,7 @@ interface MealDropdownProps {
   onChange: (newMeal: Meal | null) => void;
 }
 
+// utility function to convert Meal data to Option data
 function mealToOption(meal: Meal | null): Option | null {
   if (meal) {
     return {
@@ -18,7 +19,7 @@ function mealToOption(meal: Meal | null): Option | null {
     return null;
   }
 }
-
+// utility function to convert Option data to Meal data
 function optionToMeal(option: Option | null): Meal | null {
   if (!option || option.value === 0) {
     return null;
@@ -38,6 +39,7 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
   const [options, setOptions] = useState<Option[]>([]);
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
 
+  // convert meals to options every time allMeals changes
   useEffect(() => {
     let newOptions: Option[] = [];
     allMeals.forEach((meal) => {
@@ -50,6 +52,7 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
     setOptions(newOptions);
   }, [allMeals]);
 
+  // convert selectedMeal to Option and set as selected option every time selectedMeal changes
   useEffect(() => {
     setSelectedOption(mealToOption(selectedMeal));
   }, [selectedMeal]);

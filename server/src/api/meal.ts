@@ -12,6 +12,7 @@ import {
 
 export const meal = express.Router();
 
+// endpoint to provide list of all meals available for the specified hospital
 meal.post("/list", async (req, res) => {
   logger.api('Received request to "/meal/list" api endpoint');
   let reqData = req.body;
@@ -43,6 +44,7 @@ meal.post("/list", async (req, res) => {
   res.send({ meals: queryResult.result.recordset });
 });
 
+// endpoint to merge an existing/new meal on the DB
 meal.post("/merge", async (req, res) => {
   logger.api('Received request to "/meal/merge" api endpoint');
   let reqData = req.body;

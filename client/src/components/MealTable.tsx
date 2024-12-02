@@ -14,18 +14,12 @@ import {
 import MealDropdown from "./MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { CycleData, Meal, MealDays, MealType, Option } from "../types";
-import {
-  getCycleMealTypeItems,
-  mergeMealDay,
-  mergeMealDays,
-} from "../utils/db-utils";
+import { getCycleMealDays, mergeMealDay } from "../utils/db-utils";
 
 interface MealTableProps {
   cycle: CycleData;
   mealType: MealType;
   allMeals: Meal[];
-  mealDaysList: MealDays[];
-  onUpdate: (newMealDaysList: MealDays[]) => void;
 }
 
 interface RowData {
@@ -34,12 +28,6 @@ interface RowData {
   mealName: string;
   days: boolean[];
 }
-
-export const options: Option[] = [
-  { value: 1, label: "Macon & Eggs" },
-  { value: 2, label: "Oat Muffin" },
-  { value: 3, label: "Chicken Pie" },
-];
 
 function rowsFromMealDays(mealDaysList: MealDays[]): RowData[] {
   let rowId = 0;
@@ -62,44 +50,29 @@ function adjustRowData(data: boolean[], days: number) {
   return [...data, ...Array(days - data.length).fill(false)];
 }
 
-const MealTable: React.FC<MealTableProps> = ({
-  cycle,
-  mealType,
-  allMeals,
-  mealDaysList,
-  onUpdate,
-}) => {
+const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
   // State to manage rows
-  const [rows, setRows] = useState<RowData[]>(rowsFromMealDays(mealDaysList));
+  const [rows, setRows] = useState<RowData[]>([]);
 
+  // load all the meals and active days for the currently selected cycle and place the data into rows
   useEffect(() => {
-    getCycleMealTypeItems(cycle.Id, cycle.cycleDays, mealType.Id).then(
-      (result) => {
-        if (result && result.mealDaysList) {
-          let validMealDaysList = result.mealDaysList.filter(
-            (mealDays) => mealDays.mealName && mealDays.days.some((day) => day)
-          );
-          // {
-          //   let atLeastOneDayActive = mealDays.days.find((day) => day === true);
-          //   if (mealDays.mealId > 0 && atLeastOneDayActive) {
-          //     return true;
-          //   } else {
-          //     return false;
-          //   }
-          // });
-          let newRows = rowsFromMealDays(validMealDaysList);
-          console.log("New rows: ", newRows);
-          setRows(newRows);
-        } else {
-          setRows([]);
-        }
+    getCycleMealDays(cycle.Id, cycle.cycleDays, mealType.Id).then((result) => {
+      if (result && result.mealDaysList) {
+        let validMealDaysList = result.mealDaysList.filter(
+          (mealDays) => mealDays.mealName && mealDays.days.some((day) => day)
+        );
+        let newRows = rowsFromMealDays(validMealDaysList);
+        console.log("New rows: ", newRows);
+        setRows(newRows);
+      } else {
+        setRows([]);
       }
-    );
+    });
   }, [cycle.Id, cycle.cycleDays, mealType.Id]);
 
   // Update row data when daysInCycle changes
   useEffect(() => {
-    // TODO check with user whether they are sure to lose data when days are reduced
+    // TODO check with user whether they are sure to lose data when days are reduced or show error that days that are active cannot be deleted.
     setRows((prevRows) =>
       prevRows.map((row) => ({
         ...row,
@@ -108,19 +81,7 @@ const MealTable: React.FC<MealTableProps> = ({
     );
   }, [cycle.cycleDays]);
 
-  // const prevMealsRef = useRef<MealDays[]>([]);
-
-  // Notify parent when row data changes
-  // useEffect(() => {
-  //   const validMeals = rows
-  //     .filter((row) => row.mealName && row.days.some((day) => day)) // Only include rows with a meal name and at least one checked day
-  //     .map((row) => ({
-  //       name: row.mealName,
-  //       days: row.days,
-  //     }));
-  //   // onUpdate(mealType, validMeals);
-  // }, [rows]);
-
+  // function to add a new row to the cycle
   const handleAddRow = () => {
     console.log("Add row handler called.");
     setRows((prevRows) => [
@@ -134,18 +95,21 @@ const MealTable: React.FC<MealTableProps> = ({
     ]);
   };
 
+  // function to handle the event when a checkbox is clicked/changed
   const handleCheckboxChange = async (
     currentRow: RowData,
     dayIndex: number
   ) => {
     console.log("Check box handler called.", currentRow.rowId, dayIndex);
 
+    // update rows data for display
     currentRow.days = currentRow.days.map((checked: boolean, index: number) =>
       index === dayIndex ? !checked : checked
     );
     setRows((prevRows) =>
       prevRows.map((row) => (row.rowId === currentRow.rowId ? currentRow : row))
     );
+    // update DB data
     await mergeMealDay(
       cycle.Id,
       mealType.Id,
@@ -155,6 +119,7 @@ const MealTable: React.FC<MealTableProps> = ({
     );
   };
 
+  // function to handle event where the meal for a row has changed
   const handleMealChange = async (
     currentRow: RowData,
     newMealId: number,
@@ -181,9 +146,10 @@ const MealTable: React.FC<MealTableProps> = ({
         index++;
       }
     }
-
+    // set row meal Id and name to teh new value
     currentRow.mealId = newMealId;
     currentRow.mealName = newMealName;
+    // update the DB with new meal info
     if (newMealId && currentRow.days) {
       let index = 0;
       while (index < currentRow.days.length) {
@@ -197,6 +163,7 @@ const MealTable: React.FC<MealTableProps> = ({
         index++;
       }
     }
+    // update rows with new meal info for display
     let newRows = rows.map((prevRow) =>
       prevRow.rowId === currentRow.rowId ? currentRow : prevRow
     );

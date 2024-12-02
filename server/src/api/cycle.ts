@@ -12,6 +12,7 @@ import {
 
 export const cycle = express.Router();
 
+// endpoint to list all existing cycles for the specified hospital
 cycle.post("/list", async (req, res) => {
   logger.api('Received request to "/cycle/list" api endpoint');
   let reqData = req.body;
@@ -45,8 +46,9 @@ cycle.post("/list", async (req, res) => {
   res.send(result);
 });
 
-cycle.post("/detail", async (req, res) => {
-  logger.api('Received request to "/cycle/detail" api endpoint');
+// endpoint to provide the cycle information for the specified cycle
+cycle.post("/info", async (req, res) => {
+  logger.api('Received request to "/cycle/info" api endpoint');
   let reqData = req.body;
   logger.api("Req Data: ", reqData);
   const requiredFields: string[] = ["Id"];
@@ -57,7 +59,7 @@ cycle.post("/detail", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
-  const cycleDetailQueryStr = `
+  const cycleInfoQueryStr = `
     SELECT C.Id, C.name, C.cycleDays, C.hospitalId, H.name as hospitalName, C.startDate, C.createDate, C.createdBy, C.isActive 
     FROM Ems.CSCycle as C
     LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
@@ -65,7 +67,7 @@ cycle.post("/detail", async (req, res) => {
     WHERE C.Id = '${reqData.Id}'
     ;
     `;
-  let cycleQuery = await safeQuery(sql, cycleDetailQueryStr);
+  let cycleQuery = await safeQuery(sql, cycleInfoQueryStr);
   if (!cycleQuery.success) {
     res.status(400).send({
       message: "Problem processing query.",
@@ -80,28 +82,27 @@ cycle.post("/detail", async (req, res) => {
     return;
   }
 
-  const cycleItemsQueryStr = `
-  SELECT
-    CI.*, MT.mealDescription as mealType, M.name as mealName, M.description as mealDescription, U.name as createdByName
-  FROM Ems.CSCycleItem as CI
-  LEFT JOIN dbo.MenuMeal as MT ON CI.mealTypeId = MT.Id
-  LEFT JOIN Ems.CSMeal as M ON CI.mealId = M.Id
-  LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
-  WHERE CI.cycleId = '${reqData.Id}'
-  ;
-  `;
-  let cycleItemsQuery = await safeQuery(sql, cycleItemsQueryStr);
-  if (!cycleItemsQuery.success) {
-    res.status(400).send({
-      message: "Problem processing query.",
-      error: cycleItemsQuery.result,
-    });
-    return;
-  }
+  // const cycleItemsQueryStr = `
+  // SELECT
+  //   CI.*, MT.mealDescription as mealType, M.name as mealName, M.description as mealDescription, U.name as createdByName
+  // FROM Ems.CSCycleItem as CI
+  // LEFT JOIN dbo.MenuMeal as MT ON CI.mealTypeId = MT.Id
+  // LEFT JOIN Ems.CSMeal as M ON CI.mealId = M.Id
+  // LEFT JOIN dbo.users as U ON CI.createdBy = U.Id
+  // WHERE CI.cycleId = '${reqData.Id}'
+  // ;
+  // `;
+  // let cycleItemsQuery = await safeQuery(sql, cycleItemsQueryStr);
+  // if (!cycleItemsQuery.success) {
+  //   res.status(400).send({
+  //     message: "Problem processing query.",
+  //     error: cycleItemsQuery.result,
+  //   });
+  //   return;
+  // }
 
   res.send({
     cycleInfo: cycleQuery.result.recordset[0],
-    cycleItems: cycleItemsQuery.result.recordset,
   });
 });
 
@@ -273,74 +274,74 @@ cycle.post("/merge-item", async (req, res) => {
   });
 });
 
-cycle.post("/merge-items", async (req, res) => {
-  logger.api('Received request to "/cycle/merge-items" api endpoint');
-  let reqData = req.body;
-  logger.api("Req Data: ", reqData);
-  if (!reqData.items) {
-    res.status(400).send("Required input field missing: items");
-    return;
-  }
-  let mergedIds: number[] = [];
-  for (const itemData of reqData.items) {
-    const cycleFields: FieldInfo[] = [
-      new FieldInfo("Id", "number", true),
-      new FieldInfo("cycleId", "number", true, "", true),
-      new FieldInfo("mealTypeId", "number", true, "", true),
-      new FieldInfo("mealId", "number", true, "", true),
-      new FieldInfo("cycleDay", "number", true, "", true),
-      new FieldInfo("createdBy", "number", false),
-      new FieldInfo("isActive", "other", false),
-    ];
+// cycle.post("/merge-items", async (req, res) => {
+//   logger.api('Received request to "/cycle/merge-items" api endpoint');
+//   let reqData = req.body;
+//   logger.api("Req Data: ", reqData);
+//   if (!reqData.items) {
+//     res.status(400).send("Required input field missing: items");
+//     return;
+//   }
+//   let mergedIds: number[] = [];
+//   for (const itemData of reqData.items) {
+//     const cycleFields: FieldInfo[] = [
+//       new FieldInfo("Id", "number", true),
+//       new FieldInfo("cycleId", "number", true, "", true),
+//       new FieldInfo("mealTypeId", "number", true, "", true),
+//       new FieldInfo("mealId", "number", true, "", true),
+//       new FieldInfo("cycleDay", "number", true, "", true),
+//       new FieldInfo("createdBy", "number", false),
+//       new FieldInfo("isActive", "other", false),
+//     ];
 
-    let requiredFieldMissing = checkRequiredFields(
-      reqData,
-      getRequiredFields(cycleFields)
-    );
-    if (requiredFieldMissing) {
-      logger.error("Required input field missing: " + requiredFieldMissing);
-      res
-        .status(400)
-        .send("Required input field missing: " + requiredFieldMissing);
-      return;
-    }
-    let errorField = checkDates(reqData, cycleFields);
-    if (errorField) {
-      res
-        .status(400)
-        .send(
-          errorField.name +
-            " cannot be converted to a valid date." +
-            reqData[errorField.name]
-        );
-      return;
-    }
+//     let requiredFieldMissing = checkRequiredFields(
+//       reqData,
+//       getRequiredFields(cycleFields)
+//     );
+//     if (requiredFieldMissing) {
+//       logger.error("Required input field missing: " + requiredFieldMissing);
+//       res
+//         .status(400)
+//         .send("Required input field missing: " + requiredFieldMissing);
+//       return;
+//     }
+//     let errorField = checkDates(reqData, cycleFields);
+//     if (errorField) {
+//       res
+//         .status(400)
+//         .send(
+//           errorField.name +
+//             " cannot be converted to a valid date." +
+//             reqData[errorField.name]
+//         );
+//       return;
+//     }
 
-    const mergeCycleQueryString = createMergeQuery(
-      "Ems.CSCycle",
-      reqData,
-      cycleFields
-    );
-    logger.debug("Merge Cycle query string: ", mergeCycleQueryString);
-    let mergeCycleQuery = await safeQuery(sql, mergeCycleQueryString);
-    if (!mergeCycleQuery.success) {
-      res.status(400).send({
-        message: "Problem processing query.",
-        error: mergeCycleQuery.result,
-        queryString: mergeCycleQuery.queryString,
-      });
-      return;
-    }
-    logger.debug("Merge Cycle query result: ", mergeCycleQuery);
-    let id;
-    if (reqData.Id == "null" || !reqData.Id) {
-      id = mergeCycleQuery.result.recordset[0].Id;
-    } else {
-      id = reqData.Id;
-    }
-    mergedIds.push(Number(id));
-  }
-  res.send({
-    Ids: mergedIds,
-  });
-});
+//     const mergeCycleQueryString = createMergeQuery(
+//       "Ems.CSCycle",
+//       reqData,
+//       cycleFields
+//     );
+//     logger.debug("Merge Cycle query string: ", mergeCycleQueryString);
+//     let mergeCycleQuery = await safeQuery(sql, mergeCycleQueryString);
+//     if (!mergeCycleQuery.success) {
+//       res.status(400).send({
+//         message: "Problem processing query.",
+//         error: mergeCycleQuery.result,
+//         queryString: mergeCycleQuery.queryString,
+//       });
+//       return;
+//     }
+//     logger.debug("Merge Cycle query result: ", mergeCycleQuery);
+//     let id;
+//     if (reqData.Id == "null" || !reqData.Id) {
+//       id = mergeCycleQuery.result.recordset[0].Id;
+//     } else {
+//       id = reqData.Id;
+//     }
+//     mergedIds.push(Number(id));
+//   }
+//   res.send({
+//     Ids: mergedIds,
+//   });
+// });

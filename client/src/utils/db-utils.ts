@@ -1,7 +1,8 @@
 import axios from "axios";
-import { CycleData, MealDays, MealType } from "../types";
+import { CycleData, Meal, MealDays, MealType } from "../types";
 
-export async function getMealsList(hospitalId: number): Promise<MealType[]> {
+// utility function to get a list of meals for a hospital
+export async function getMealsList(hospitalId: number): Promise<Meal[]> {
   let result: CycleData[] = [];
   try {
     let response = await axios.post(`${process.env.REACT_APP_API}/meal/list`, {
@@ -22,6 +23,7 @@ export async function getMealsList(hospitalId: number): Promise<MealType[]> {
   return result;
 }
 
+// utility function to get list of meal types
 export async function getMealTypeList(): Promise<MealType[]> {
   let result: CycleData[] = [];
   try {
@@ -44,6 +46,7 @@ export async function getMealTypeList(): Promise<MealType[]> {
   return result;
 }
 
+// utility function to get a list of cycles for a hospital
 export async function getCycleList(hospitalId: number): Promise<CycleData[]> {
   let result: CycleData[] = [];
   try {
@@ -60,14 +63,14 @@ export async function getCycleList(hospitalId: number): Promise<CycleData[]> {
   return result;
 }
 
+// utility function to get the Cycle info for a specified cycle id
 export async function getCycleDetail(
   cycleId: number
-): Promise<{ cycleInfo: CycleData; mealDaysList: MealDays[] } | undefined> {
+): Promise<{ cycleInfo: CycleData } | undefined> {
   console.log("Getting detail for cycle: " + cycleId);
-  let apiResult = await axios.post(
-    `${process.env.REACT_APP_API}/cycle/detail`,
-    { Id: cycleId }
-  );
+  let apiResult = await axios.post(`${process.env.REACT_APP_API}/cycle/info`, {
+    Id: cycleId,
+  });
   console.log("Cycle detail apiResult: ", apiResult);
   if (apiResult.status !== 200) {
     console.error(
@@ -76,36 +79,15 @@ export async function getCycleDetail(
     );
     return undefined;
   }
-  let mealDaysMap: Map<string, MealDays> = new Map();
-  if (apiResult.data.cycleItems) {
-    apiResult.data.cycleItems.forEach((cycleItem: any) => {
-      let uniqueId =
-        cycleItem.cycleId + ":" + cycleItem.mealTypeId + ":" + cycleItem.mealId;
-      let existingMealDays = mealDaysMap.get(uniqueId);
-      if (!existingMealDays) {
-        existingMealDays = {
-          cycleId: cycleItem.cycleId,
-          mealTypeId: cycleItem.mealTypeId,
-          mealTypeName: cycleItem.mealType,
-          mealId: cycleItem.mealId,
-          mealName: cycleItem.meal,
-          days: [],
-        };
-      }
-      existingMealDays.days[cycleItem.cycleDay] = cycleItem.isActive == "true";
-      mealDaysMap.set(uniqueId, existingMealDays);
-    });
-  }
-  let mealDaysList = Array.from(mealDaysMap.values());
   let result = {
     cycleInfo: apiResult.data.cycleInfo,
-    mealDaysList,
   };
-  console.log("Cycle detail result: ", result);
+  console.log("Cycle info result: ", result);
   return result;
 }
 
-export async function getCycleMealTypeItems(
+// utility function to fetch all the mealDays for a cycle
+export async function getCycleMealDays(
   cycleId: number,
   cycleDays: number,
   mealTypeId: number
@@ -164,6 +146,7 @@ export async function getCycleMealTypeItems(
   return result;
 }
 
+// utility function to merge new/existing cycle info
 export async function mergeCycleInfo(
   cycle: CycleData
 ): Promise<number | undefined> {
@@ -179,6 +162,7 @@ export async function mergeCycleInfo(
   }
 }
 
+// utility function to merge new/existing meal day item (individual checkboxes)
 export async function mergeMealDay(
   cycleId: number,
   mealTypeId: number,
@@ -186,7 +170,6 @@ export async function mergeMealDay(
   dayIndex: number,
   active: boolean
 ): Promise<void> {
-  let response;
   const mergeItemInput = {
     cycleId,
     mealTypeId,
@@ -200,33 +183,6 @@ export async function mergeMealDay(
       mergeItemInput
     );
     console.log("Cycle item merge apiResult: ", apiResult);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-export async function mergeMealDays(
-  cycle: CycleData,
-  mealDays: MealDays
-): Promise<void> {
-  let response;
-  const mergeItemInput = {};
-  try {
-    let api1Result = await axios.post(
-      `${process.env.REACT_APP_API}/cycle/merge-item`,
-      cycle
-    );
-    console.log("Cycle merge apiResult: ", api1Result);
-    if (api1Result.data.Id) {
-      let api2Result = await axios.post(
-        `${process.env.REACT_APP_API}/cycle/detail`,
-        { Id: api1Result.data.Id }
-      );
-      console.log("Cycle detail apiResult: ", api2Result);
-      response = api2Result.data.cycleInfo;
-    }
-    console.log("Returning ...");
-    return response;
   } catch (error) {
     console.error(error);
   }

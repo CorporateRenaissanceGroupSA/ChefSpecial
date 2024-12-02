@@ -12,14 +12,6 @@ import {
   mergeCycleInfo,
 } from "./utils/db-utils";
 
-const debounce = (func: Function, delay: number) => {
-  let timer: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => func(...args), delay);
-  };
-};
-
 const App: React.FC = () => {
   const [hospitalId, setHospitalId] = useState<number>(1);
   const [allCycles, setAllCycles] = useState<CycleData[]>([]);
@@ -28,8 +20,8 @@ const App: React.FC = () => {
   const [currentCycle, setCurrentCycle] = useState<CycleData | undefined>(
     undefined
   );
-  const [mealDaysList, setMealDaysList] = useState<MealDays[]>([]);
 
+  // loads all the mealTypes once when the app is loaded
   useEffect(() => {
     getMealTypeList().then((result) => {
       setMealTypes(result);
@@ -37,10 +29,8 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Loads all the Cycles and Meals available for a hospital every time the hospitalId changes
   useEffect(() => {
-    let path = process.env.REACT_APP_API;
-    console.log("Path: ", path);
-    console.log();
     getCycleList(hospitalId).then((result) => {
       setAllCycles(result);
       console.log("All Cycles updated: ", result);
@@ -51,50 +41,49 @@ const App: React.FC = () => {
     });
   }, [hospitalId]);
 
-  const debouncedLog = debounce((updatedData: CycleData) => {
-    console.log("Updated cycleData:", updatedData);
-  }, 300); // Adjust delay as needed
-
+  // function to deal with the event when a different cycle is selected by the user
   const handleCycleChange = async (option: SelectOption | null) => {
     console.log("Handling cycle change in App", option);
-    if (option) {
-      let addNewCycle = false;
-      let existingCycleId;
-      let existingCycle = allCycles.find(
-        (cycle) => cycle.Id.toString() === option.value
-      );
-      if (!existingCycle) {
-        console.warn("Creating new cycle: ", option);
-        existingCycleId = await mergeCycleInfo({
-          Id: 0,
-          hospitalId: hospitalId,
-          name: option.label,
-          cycleDays: 3,
-          startDate: new Date().toJSON(),
-          createdAt: "",
-          createdBy: 0,
-          isActive: true,
-        });
-        console.log("New Cycle id", existingCycleId);
-        addNewCycle = true;
-      } else {
-        existingCycleId = existingCycle.Id;
-      }
-      let cycleDetail = await getCycleDetail(existingCycleId as number);
-      if (cycleDetail) {
-        setCurrentCycle(cycleDetail.cycleInfo);
-        if (addNewCycle) {
-          setAllCycles((prev) => [...prev, cycleDetail!.cycleInfo]);
-        }
-        setMealDaysList(cycleDetail.mealDaysList);
-      }
-    } else {
+    // deal with case where no cycle is selected
+    if (!option) {
       console.log("Setting current cycle to Undefined");
       setCurrentCycle(undefined);
-      setMealDaysList([]);
+      return;
+    }
+
+    // deal with case where a cycle is selected
+    let addNewCycle = false;
+    let existingCycleId;
+    let existingCycle = allCycles.find(
+      (cycle) => cycle.Id.toString() === option.value
+    );
+    if (!existingCycle) {
+      console.warn("Creating new cycle: ", option);
+      existingCycleId = await mergeCycleInfo({
+        Id: 0,
+        hospitalId: hospitalId,
+        name: option.label,
+        cycleDays: 3,
+        startDate: new Date().toJSON(),
+        createdAt: "",
+        createdBy: 0,
+        isActive: true,
+      });
+      console.log("New Cycle id", existingCycleId);
+      addNewCycle = true;
+    } else {
+      existingCycleId = existingCycle.Id;
+    }
+    let cycleDetail = await getCycleDetail(existingCycleId as number);
+    if (cycleDetail) {
+      setCurrentCycle(cycleDetail.cycleInfo);
+      if (addNewCycle) {
+        setAllCycles((prev) => [...prev, cycleDetail!.cycleInfo]);
+      }
     }
   };
 
+  // function to deal with event where cycle data changes
   const handleCycleDataChange = async (field: string, value: any) => {
     console.log(
       "App handling cycle data change. Field: " + field + " Value: " + value
@@ -112,25 +101,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateMeals = (newMealDaysList: MealDays[]) => {
-    console.log("Meal days list updated!", newMealDaysList);
-    // setCycleData((prev) => {
-    //   const updatedCycleData = {
-    //     ...prev,
-    //     meals: {
-    //       ...prev.meals,
-    //       [mealType]: meals,
-    //     },
-    //   };
-    //   debouncedLog(updatedCycleData);
-    //   return updatedCycleData;
-    // });
-  };
-
-  // useEffect(() => {
-  //   console.log("Updated cycleData:", cycleData);
-  // }, [cycleData]);
-
   return (
     <div className="min-h-screen p-2">
       <CycleSelector
@@ -147,28 +117,16 @@ const App: React.FC = () => {
             cycle={currentCycle}
             mealType={mealTypes[0]}
             allMeals={allMeals}
-            mealDaysList={mealDaysList.filter(
-              (mealDay) => mealDay.mealTypeId === mealTypes[0].Id
-            )}
-            onUpdate={handleUpdateMeals}
           />
           <MealTable
             cycle={currentCycle}
             mealType={mealTypes[1]}
             allMeals={allMeals}
-            mealDaysList={mealDaysList.filter(
-              (mealDay) => mealDay.mealTypeId === mealTypes[1].Id
-            )}
-            onUpdate={handleUpdateMeals}
           />
           <MealTable
             cycle={currentCycle}
             mealType={mealTypes[2]}
             allMeals={allMeals}
-            mealDaysList={mealDaysList.filter(
-              (mealDay) => mealDay.mealTypeId === mealTypes[2].Id
-            )}
-            onUpdate={handleUpdateMeals}
           />
         </div>
       )}
