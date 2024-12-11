@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { styled } from "@mui/material/styles";
 import {
   TableContainer,
   Table,
@@ -8,14 +9,34 @@ import {
   Paper,
   TableCell,
   Typography,
-  Checkbox,
   Button,
+  tableCellClasses,
+  checkboxClasses,
 } from "@mui/material";
 
 import MealDropdown from "./MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { Option } from "../types";
 import { CycleData } from "../types";
+import * as Icon from "react-icons/fi";
+import Checkbox from "react-custom-checkbox";
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: "#F6F6F6",
+    color: "#656565",
+    borderBottom: "none",
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "& td": {
+    borderBottom: `1px solid #F1F1F1`,
+  },
+}));
 
 interface Meal {
   name: string;
@@ -60,7 +81,7 @@ const MealTable: React.FC<MealTableProps> = ({
     );
   }, [daysInCycle]);
 
-   const prevMealsRef = useRef<Meal[]>([]);
+  const prevMealsRef = useRef<Meal[]>([]);
 
   // Notify parent when row data changes
   useEffect(() => {
@@ -71,8 +92,6 @@ const MealTable: React.FC<MealTableProps> = ({
         days: row.data,
       }));
     // onUpdate(mealType, validMeals);
-
-   
 
     if (JSON.stringify(validMeals) !== JSON.stringify(prevMealsRef.current)) {
       prevMealsRef.current = validMeals; // Update ref with new validMeals
@@ -125,62 +144,85 @@ const MealTable: React.FC<MealTableProps> = ({
   );
 
   return (
-    <div className="p-4">
-      <TableContainer component={Paper} sx={{ marginTop: 2 }}>
-        <Table>
-          <caption>
-            <Button onClick={handleAddRow}>
-              <PlusCircleIcon className="size-5" />
-            </Button>
-          </caption>
-          <TableHead>
-            <TableRow>
-              <TableCell width="20%">{mealType}</TableCell>
-              {dayHeaders.map((day, index) => (
-                <TableCell key={index} align="center">
-                  {day}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>
-                  <MealDropdown
-                    value={
-                      row.mealName
-                        ? {
-                            value:
-                              options.find((opt) => opt.label === row.mealName)
-                                ?.value || 0,
-                            label: row.mealName,
-                          }
-                        : null
-                    }
-                    onChange={(selectedOption) =>
-                      handleMealChange(
-                        row.id,
-                        selectedOption ? selectedOption.label : ""
-                      )
-                    }
-                  />
-                </TableCell>
-                {row.data.map((checked, dayIndex) => (
-                  <TableCell key={dayIndex} align="center">
-                    <Checkbox
-                      checked={checked}
-                      onChange={() => handleCheckboxChange(row.id, dayIndex)}
-                    />
-                    {/* Placeholder cell content, can be updated to display other data */}
-                  </TableCell>
+    <div className="px-4">
+      <Paper
+        sx={{
+          width: "100%",
+          boxShadow: "none",
+          overflow: "hidden",
+          borderRadius: "5px",
+        }}
+      >
+        <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+          <Table size="small">
+            <caption>
+              <Button onClick={handleAddRow}>
+                <PlusCircleIcon className="size-5 text-[#FFB600]" />
+              </Button>
+            </caption>
+            <TableHead>
+              <TableRow>
+                <StyledTableCell width="20%" sx={{ fontFamily: "Poppins" }}>
+                  {mealType}
+                </StyledTableCell>
+                {dayHeaders.map((day, index) => (
+                  <StyledTableCell
+                    key={index}
+                    align="center"
+                    sx={{ fontFamily: "Regular" }}
+                  >
+                    {day}
+                  </StyledTableCell>
                 ))}
               </TableRow>
-            ))}
-            {/* <TableRow>+</TableRow> */}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {rows.map((row) => (
+                <StyledTableRow key={row.id}>
+                  <TableCell>
+                    <MealDropdown
+                      value={
+                        row.mealName
+                          ? {
+                              value:
+                                options.find(
+                                  (opt) => opt.label === row.mealName
+                                )?.value || 0,
+                              label: row.mealName,
+                            }
+                          : null
+                      }
+                      onChange={(selectedOption: any) =>
+                        handleMealChange(
+                          row.id,
+                          selectedOption ? selectedOption.label : ""
+                        )
+                      }
+                    />
+                  </TableCell>
+                  {row.data.map((checked, dayIndex) => (
+                    <TableCell
+                      key={dayIndex}
+                      align="justify"
+                      className="mealTable-day"
+                    >
+                      <Checkbox
+                        icon={<Icon.FiCheck color="#26FF00" size={15} />}
+                        checked={checked}
+                        onChange={() => handleCheckboxChange(row.id, dayIndex)}
+                        borderColor="#D9D9D9"
+                        borderRadius={5}
+                        style={{ boxShadow: "opx 1px 4px rgba(0, 0, 0, 0.16)" }}
+                      />
+                    </TableCell>
+                  ))}
+                </StyledTableRow>
+              ))}
+              {/* <TableRow>+</TableRow> */}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </div>
   );
 };
