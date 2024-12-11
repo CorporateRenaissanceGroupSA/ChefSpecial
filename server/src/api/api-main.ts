@@ -7,7 +7,7 @@ import { sql } from "..";
 import { createCSCycleTableQueryStr } from "../db/tables/CSCycle";
 import { createCSCycleItemTableQueryStr } from "../db/tables/CSCycleItem";
 
-export function startApi(port: number = 4000) {
+export function startApi(port: number = 4001) {
   const app = express();
   app.use(cors());
   app.use(express.json());
