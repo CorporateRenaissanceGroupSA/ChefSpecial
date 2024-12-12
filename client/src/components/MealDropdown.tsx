@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
-<<<<<<< HEAD
-import { options } from "./MealTable";
-import { Option } from "../types";
+// import { options } from "./MealTable";
+// import { Option } from "../types";
+import { Meal, Option } from "../types";
 
 const customStyles = {
   menuPortal: (base: any) => ({
@@ -18,7 +18,7 @@ const customStyles = {
     color: "#656565",
     borderColor: state.isFocused ? "#656565" : "#ccc",
     "&:hover": {},
-    fontFamily: "Poppins"
+    fontFamily: "Poppins",
   }),
   indicatorsContainer: (base: any) => ({
     ...base,
@@ -36,9 +36,6 @@ const customStyles = {
     },
   }),
 };
-=======
-import { Meal, Option } from "../types";
->>>>>>> origin/fred_changes
 
 interface MealDropdownProps {
   allMeals: Meal[];
@@ -46,9 +43,6 @@ interface MealDropdownProps {
   onChange: (newMeal: Meal | null) => void;
 }
 
-<<<<<<< HEAD
-const MealDropdown: React.FC<MealDropdownProps> = ({ value, onChange }) => {
-=======
 // utility function to convert Meal data to Option data
 function mealToOption(meal: Meal | null): Option | null {
   if (meal) {
@@ -98,7 +92,6 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
     setSelectedOption(mealToOption(selectedMeal));
   }, [selectedMeal]);
 
->>>>>>> origin/fred_changes
   return (
     <Select
       options={options}

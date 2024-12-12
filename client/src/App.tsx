@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CycleSelector from "./components/CycleSelector";
-import "./App.css";
+import "./App.scss";
 import { CycleData, Meal, MealDays, MealType } from "./types";
 import MealTable from "./components/MealTable";
 import { SelectOption } from "./components/CreatableSelect";
