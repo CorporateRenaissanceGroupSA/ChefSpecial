@@ -3,7 +3,7 @@ import Creatable from "react-select/creatable";
 import { components, GroupBase, Props } from "react-select";
 import styled from "styled-components";
 
-interface Option {
+export interface SelectOption {
   value: string;
   label: string;
 }
@@ -33,9 +33,9 @@ const CustomControl = (props: any) => {
 };
 
 interface CreatableSelectProps {
-  options: Option[];
-  value: Option | null;
-  onChange: (value: Option | null) => void;
+  options: SelectOption[];
+  value: SelectOption | null;
+  onChange: (value: SelectOption | null) => void;
   placeholder?: string;
 }
 
@@ -46,11 +46,11 @@ const CreatableSelect: React.FC<CreatableSelectProps> = ({
   placeholder = "Cycle Name",
 }) => {
   return (
-    <Creatable<Option, false, GroupBase<Option>>
+    <Creatable<SelectOption, false, GroupBase<SelectOption>>
       className="col-span-2"
       options={options}
       value={value}
-      onChange={onChange}
+      onChange={(newValue) => onChange(newValue)}
       components={{ Control: CustomControl }}
       isClearable
       styles={{

@@ -1,20 +1,19 @@
 export const createCSCycleItemTableQueryStr = `
   IF (NOT EXISTS (
     SELECT * FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'dbo' AND
+    WHERE TABLE_SCHEMA = 'Ems' AND
     TABLE_NAME = 'CSCycleItem'
   ))
   BEGIN
-    CREATE TABLE dbo.CSCycleItem (
+    CREATE TABLE Ems.CSCycleItem (
       Id int IDENTITY(1,1) PRIMARY KEY,
-      cycle int not null REFERENCES dbo.CSCycle(Id),
+      cycleId int not null REFERENCES Ems.CSCycle(Id),
+      mealTypeId int not null REFERENCES dbo.MenuMeal(Id),
+      mealId int not null REFERENCES Ems.CSMeal(Id),
       cycleDay tinyint not null,
-      meal int not null REFERENCES dbo.MenuMeal(Id),
-      item varchar(150) not null,
-      createDate date not null,
-      createdBy int not null REFERENCES dbo.users(Id),
-      served int REFERENCES dbo.ItemServed(Id),
-      isActive bit not null,
+      createDate datetime DEFAULT GETDATE(),
+      createdBy int REFERENCES dbo.users(Id),
+      isActive bit DEFAULT 'true',
     );
   END
 `;

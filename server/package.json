@@ -5,9 +5,12 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "check-env": "node check-env.js",
     "build": "tsc",
-    "start": "npm run build && node lib/index.js"
+    "watch": "tsc -watch",
+    "start": "npm run check-env && npm run build && node lib/index.js",
+    "startdev": "npm run watch && nodemon lib/index.js",
+    "startserver": "ts-node ."
   },
   "keywords": [],
   "author": "",
@@ -26,6 +29,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mssql": "^11.0.1",
-    "winston": "^3.15.0"
+    "winston": "^3.17.0"
   }
 }
