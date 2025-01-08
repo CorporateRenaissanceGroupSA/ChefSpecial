@@ -85,17 +85,17 @@ const CreatableSelect: React.FC<CreatableSelectProps> = ({
         input: (base) => ({
           ...base,
           margin: 0,
-          paddingLeft: "3px"
+          paddingLeft: "3px",
         }),
         option: (base, state) => ({
           ...base,
           backgroundColor: state.isFocused ? "#F6F6F6" : "#FFF",
-          color: state.isSelected ? "black" : "black"    
+          color: state.isSelected ? "black" : "black",
         })
       }}
       placeholder={placeholder}
     />
-  );
+  );  
 };
 
 export default CreatableSelect;

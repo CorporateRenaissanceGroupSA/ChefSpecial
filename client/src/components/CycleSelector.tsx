@@ -17,6 +17,15 @@ const dateFieldTheme = (theme: any) =>
   createTheme({
     ...theme,
     components: {
+      MuiStack: {
+        // root
+        styleOverrides: {
+          root: {
+            paddingTop: "0px !important",
+            overflow: "revert !important",
+          },
+        },
+      },
       MuiTextField: {
         styleOverrides: {
           root: {
@@ -28,6 +37,18 @@ const dateFieldTheme = (theme: any) =>
           },
         },
       },
+      // label
+      MuiFormLabel: {
+        styleOverrides: {
+          root: {
+            transform: "translate(14px, 0px) scale(0.75) !important",
+            marginTop: "5px !important",
+            fontFamily: "Poppins",
+            left: "-4px !important",
+            color: "#808080 !important",
+          },
+        },
+      },
       MuiOutlinedInput: {
         styleOverrides: {
           notchedOutline: {
@@ -35,26 +56,16 @@ const dateFieldTheme = (theme: any) =>
           },
         },
       },
-      MuiStack: {
+      // input
+      MuiInputBase: {
         styleOverrides: {
-          root: {
-            paddingTop: "0px !important",
-            overflow: "revert !important",
+          input: {
+            fontFamily: "Poppins",
+            padding: "25px 10px 5px !important",
           },
         },
       },
-      MuiFormLabel: {
-        styleOverrides: {
-          root: {
-            transform: "translate(14px, 0px) scale(0.75) !important",
-          },
-          focused: {
-            "&:focus": {
-              color: "#808080",
-            },
-          },
-        },
-      },
+      // calendar icon
       MuiSvgIcon: {
         styleOverrides: {
           root: {
@@ -62,12 +73,27 @@ const dateFieldTheme = (theme: any) =>
           },
         },
       },
-      MuiPickersDay: {
+      MuiInputAdornment: {
         styleOverrides: {
-          today: {
-            borderWidth: "1px",
-            borderColor: "#FFB600 !important",
-            border: "1px solid",
+          root: {
+            paddingTop: "10px !important",
+          },
+        },
+      },
+      // Date Calendar
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            boxShadow: "none !important",
+            fontFamily: "Poppins !important",
+          },
+        },
+      },
+      MuiDateCalendar: {
+        styleOverrides: {
+          root: {
+            borderRadius: "10px",
+            boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px !important",
           },
         },
       },
@@ -84,11 +110,19 @@ const inputFieldTheme = (theme: any) =>
             borderRadius: "5px !important",
             border: "none",
             borderLeft: "3px solid #FFB600",
-            backgroundColor: "#F6F6F6",
+            backgroundColor: "#F6F6F6 !important",
             boxShadow: "0 1px 4px 0px rgba(0, 0, 0, 0.16)",
           },
         },
       },
+      MuiFormLabel: {
+        styleOverrides: {
+          root: {
+            fontFamily: "Poppins",
+            top: "-3px !important",
+          }
+        }
+      }
     },
   });
 
@@ -151,16 +185,16 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
 
   return (
     <div>
-      <div className="grid grid-cols-12 space-x-4 p-4 pb-12">
+      <div className="grid grid-cols-12 space-x-3 p-1">
         <div className="col-span-4">
           <CreatableSelect
-          options={allCycleOptions}
-          value={currentCycleOption}
-          onChange={(newOption) => {
-            handleCycleInputChange(newOption);
-          }}
-          placeholder="Cycle Name"
-        />
+            options={allCycleOptions}
+            value={currentCycleOption}
+            onChange={(newOption) => {
+              handleCycleInputChange(newOption);
+            }}
+            placeholder="Cycle Name"
+          />
 
           {/* <CreatableSelect
             options={dynamicOptions}
@@ -182,23 +216,23 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           /> */}
         </div>
 
-        <div className="col-span-3"></div>
+        <div className="col-span-4"></div>
 
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["DatePicker", "DatePicker"]}>
-              <DatePicker
-                defaultValue={dayjs(
-                  currentCycle?.startDate || new Date().toJSON()
-                )}
-                onChange={(date: Dayjs | null) =>
-                  handleInputChange("startDate", date ? date.toJSON() : "")
-                }
-                label="Cycle Start Date"
-              />
-            </DemoContainer>
-          </LocalizationProvider>
+              <DemoContainer components={["DatePicker", "DatePicker"]}>
+                <DatePicker
+                  defaultValue={dayjs(
+                    currentCycle?.startDate || new Date().toJSON()
+                  )}
+                  onChange={(date: Dayjs | null) =>
+                    handleInputChange("startDate", date ? date.toJSON() : "")
+                  }
+                  label="Cycle Start Date"
+                />
+              </DemoContainer>
+            </LocalizationProvider>
             {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker", "DatePicker"]}>
                 <DatePicker
@@ -225,27 +259,27 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-2">
+        <div className="col-span-1">
           <ThemeProvider theme={inputFieldTheme}>
-                    <TextField
-          id="filled-number"
-          label="Days in Cycle"
-          type="number"
-          variant="standard"
-          onChange={(e) =>
-            handleInputChange(
-              "cycleDays",
-              e.target.value ? Number(e.target.value) : 0
-            )
-          }
-          value={currentCycle?.cycleDays}
-          placeholder=""
-          slotProps={{
-            inputLabel: {
-              shrink: true,
-            },
-          }}
-          sx={{
+            <TextField
+              id="filled-number"
+              label="Days in Cycle"
+              type="number"
+              variant="filled"
+              onChange={(e) =>
+                handleInputChange(
+                  "cycleDays",
+                  e.target.value ? Number(e.target.value) : 0
+                )
+              }
+              value={currentCycle?.cycleDays}
+              placeholder=""
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              sx={{
                 "& .MuiFilledInput-root": {
                   "&:before": {
                     borderBottom: "none", // Remove default border
@@ -263,8 +297,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 "& .MuiInputLabel-root.Mui-focused": {
                   color: "#808080", // Focused label color
                 },
+                // "& .MuiInputBase-input": {
+                //   padding: "15px 13px", // Focused label color
+                // },
               }}
-        />
+            />
             {/* <TextField
               id="filled-number"
               label="Days in Cycle"
@@ -314,9 +351,9 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           />
         </div> */}
 
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center col-span-1">
           <ViewColumnsIcon
-            className="size-10 text-[#FFB600]"
+            className="size-12 text-[#FFB600]"
             strokeWidth={0.7}
           />
         </div>
