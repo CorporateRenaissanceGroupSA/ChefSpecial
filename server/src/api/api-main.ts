@@ -6,7 +6,7 @@ import { meal } from "./meal";
 import { cycle } from "./cycle";
 import { checkRequiredFields, safeQuery } from "../utils/api-utils";
 
-export function startApi(port: number = 4000) {
+export function startApi(port: number = 4001) {
   const app = express();
   app.use(cors());
   app.use(express.json());
