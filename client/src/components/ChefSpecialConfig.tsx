@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Tabs, Grid2, List, ListItem, Box } from "@mui/material";
-import CycleSelector from "./CycleSelector";
-import MealTable from "./MealTable";
-import { SelectOption } from "./CreatableSelect";
+import CycleDetails from "./chefSpecial/cycleDetails/cycleDetails";
+import MealTable from "./chefSpecial/mealTable/MealTable";
+import { SelectOption } from "./chefSpecial/cycleName/cycleName";
 import { CycleData, Meal, MealDays, MealType } from "../types";
 import {
   getCycleDetail,
@@ -105,35 +105,35 @@ const ChefSpecialConfig = () => {
   //   setSelectedTab(newValue);
   // };
   return (
-      <div className="min-h-screen p-2 bg-white">
-        <CycleSelector
-          allCycles={allCycles}
-          currentCycle={currentCycle}
-          appCycleSelect={(option) => handleCycleChange(option)}
-          appCycleDataChange={(field, value) =>
-            handleCycleDataChange(field, value)
-          }
-        />
-        {currentCycle && mealTypes.length > 0 && (
-          <div>
-            <MealTable
-              cycle={currentCycle}
-              mealType={mealTypes[0]}
-              allMeals={allMeals}
-            />
-            <MealTable
-              cycle={currentCycle}
-              mealType={mealTypes[1]}
-              allMeals={allMeals}
-            />
-            <MealTable
-              cycle={currentCycle}
-              mealType={mealTypes[2]}
-              allMeals={allMeals}
-            />
-          </div>
-        )}
-      </div>
+    <div className="min-h-screen p-2 bg-white">
+      <CycleDetails
+        allCycles={allCycles}
+        currentCycle={currentCycle}
+        appCycleSelect={(option) => handleCycleChange(option)}
+        appCycleDataChange={(field, value) =>
+          handleCycleDataChange(field, value)
+        }
+      />
+      {currentCycle && mealTypes.length > 0 && (
+        <div>
+          <MealTable
+            cycle={currentCycle}
+            mealType={mealTypes[0]}
+            allMeals={allMeals}
+          />
+          <MealTable
+            cycle={currentCycle}
+            mealType={mealTypes[1]}
+            allMeals={allMeals}
+          />
+          <MealTable
+            cycle={currentCycle}
+            mealType={mealTypes[2]}
+            allMeals={allMeals}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 

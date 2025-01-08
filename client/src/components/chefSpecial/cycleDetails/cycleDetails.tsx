@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { CycleData } from "../types";
-import MultiSelectDropdown from "./MultiSelectDropdown";
+import { CycleData } from "../../../types";
+import MultiSelectDropdown from "../../MultiSelectDropdown";
 import { ViewColumnsIcon } from "@heroicons/react/24/outline";
 import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -8,9 +8,8 @@ import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
-// import CreatableSelect from "./CreatableSelect";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CreatableSelect, { SelectOption } from "./CreatableSelect";
+import CycleName, { SelectOption } from "../cycleName/cycleName";
 // import axios from "axios";
 
 const dateFieldTheme = (theme: any) =>
@@ -120,13 +119,11 @@ const inputFieldTheme = (theme: any) =>
           root: {
             fontFamily: "Poppins",
             top: "-3px !important",
-          }
-        }
-      }
+          },
+        },
+      },
     },
   });
-
-
 
 interface CycleSelectorProps {
   allCycles: CycleData[];
@@ -185,9 +182,9 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
 
   return (
     <div>
-      <div className="grid grid-cols-12 space-x-3 p-1">
+      <div className="grid grid-cols-12 space-x-3 p-3">
         <div className="col-span-4">
-          <CreatableSelect
+          <CycleName
             options={allCycleOptions}
             value={currentCycleOption}
             onChange={(newOption) => {
@@ -216,7 +213,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           /> */}
         </div>
 
-        <div className="col-span-4"></div>
+        <div className="col-span-3"></div>
 
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
@@ -259,7 +256,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-1">
+        <div className="col-span-2">
           <ThemeProvider theme={inputFieldTheme}>
             <TextField
               id="filled-number"

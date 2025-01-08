@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
 // import { options } from "./MealTable";
 // import { Option } from "../types";
-import { Meal, Option } from "../types";
+import { Meal, Option } from "../../../types";
 
 const customStyles = {
   menuPortal: (base: any) => ({

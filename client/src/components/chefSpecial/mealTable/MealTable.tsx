@@ -15,13 +15,13 @@ import {
   checkboxClasses,
 } from "@mui/material";
 
-import MealDropdown from "./MealDropdown";
+import MealDropdown from "../mealDropdown/MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 // import { Option } from "../types";
 // import { CycleData } from "../types";
-import { CycleData, Meal, MealDays, MealType, Option } from "../types";
-import { getCycleMealDays, mergeMealDay } from "../utils/db-utils";
-import * as Icon from "react-icons/fi";  
+import { CycleData, Meal, MealDays, MealType, Option } from "../../../types";
+import { getCycleMealDays, mergeMealDay } from "../../../utils/db-utils";
+import * as Icon from "react-icons/fi";
 import CheckboxCustom from "react-custom-checkbox";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -45,7 +45,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 //   name: string;
 //   days: boolean[];
 // }
-
 
 interface MealTableProps {
   cycle: CycleData;
@@ -110,7 +109,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
         data: adjustRowData(row.days, cycle.cycleDays),
       }))
     );
-  },  [cycle.cycleDays]);
+  }, [cycle.cycleDays]);
 
   // const prevMealsRef = useRef<Meal[]>([]);
 
@@ -233,7 +232,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
   );
 
   return (
-    <div className="px-4">
+    <div className="px-3">
       <Paper
         sx={{
           width: "100%",
@@ -244,7 +243,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
       >
         <TableContainer component={Paper} sx={{ marginTop: 2 }}>
           <Table size="small">
-            <caption>
+            <caption style={{ padding: "5px"}}>
               <Button onClick={handleAddRow}>
                 <PlusCircleIcon className="size-5 text-[#FFB600]" />
               </Button>
@@ -270,15 +269,15 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                 <StyledTableRow key={row.rowId}>
                   <TableCell>
                     <MealDropdown
-                    allMeals={allMeals}
-                    selectedMeal={{ Id: row.mealId, name: row.mealName }}
-                    onChange={(newMeal) =>
-                      handleMealChange(
-                        row,
-                        newMeal ? newMeal.Id : 0,
-                        newMeal ? newMeal.name : ""
-                      )
-                    }
+                      allMeals={allMeals}
+                      selectedMeal={{ Id: row.mealId, name: row.mealName }}
+                      onChange={(newMeal) =>
+                        handleMealChange(
+                          row,
+                          newMeal ? newMeal.Id : 0,
+                          newMeal ? newMeal.name : ""
+                        )
+                      }
                       // value={
                       //   row.mealName
                       //     ? {
