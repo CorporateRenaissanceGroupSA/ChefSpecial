@@ -4,7 +4,7 @@ import { logger } from "../utils/logger";
 import { sql } from "../index";
 import { meal } from "./meal";
 import { cycle } from "./cycle";
-import { safeQuery } from "../utils/api-utils";
+import { checkRequiredFields, safeQuery } from "../utils/api-utils";
 
 export function startApi(port: number = 4000) {
   const app = express();
@@ -18,11 +18,30 @@ export function startApi(port: number = 4000) {
     logger.api('Received request to "/meal-types" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
+    const requiredFields: string[] = ["hospitalId"];
+    let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
+    if (requiredFieldMissing) {
+      res
+        .status(400)
+        .send("Required input field missing: " + requiredFieldMissing);
+      return;
+    }
+
     const queryStr = `
-    SELECT MM.Id, MM.MealDescription as mealType 
-    FROM dbo.MenuMeal as MM
+    SELECT DISTINCT MM.Id mealId, MM.MealDescription as mealType
+    FROM dbo.Hospital H 
+    JOIN dbo.HospitalMenu as HM ON H.Id = HM.Hospital
+    JOIN dbo.MenuItem as MI ON HM.Menu = MI.Menu
+    JOIN dbo.MenuMeal as MM ON MM.id = MI.Meal
+    WHERE H.Id = ${reqData.hospitalId}
     ;
     `;
+    // const queryStr = `
+    // SELECT MM.Id, MM.MealDescription as mealType
+    // FROM dbo.MenuMeal as MM
+    // ;
+    // `;
+
     let resultQuery = await safeQuery(sql, queryStr);
     if (!resultQuery.success) {
       res.status(400).send({
