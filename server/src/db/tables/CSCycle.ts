@@ -11,6 +11,7 @@ export const createCSCycleTableQueryStr = `
       name varchar(100) not null,
       cycleDays tinyint not null,
       startDate date not null,
+      endDate date,
       createDate datetime DEFAULT GETDATE(),
       createdBy int REFERENCES dbo.users(Id),
       isActive bit not null,
