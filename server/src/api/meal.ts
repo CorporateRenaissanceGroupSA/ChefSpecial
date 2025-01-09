@@ -24,12 +24,17 @@ meal.post("/list", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
+  let mealTypeId = undefined;
+  if (reqData.mealTypeId) {
+    mealTypeId = reqData.mealTypeId;
+  }
   let queryString = `
-    SELECT M.*, H.Name as hospital, I.ServedState as served, U.name as createdByName FROM Ems.CSMeal as M
+    SELECT M.*, H.Name as hospitalName, I.ServedState as served, U.name as createdByName FROM Ems.CSMeal as M
     LEFT JOIN dbo.Hospital as H ON M.hospitalId = H.Id
     LEFT JOIN dbo.ItemServed as I ON M.servedId = I.Id
+    LEFT JOIN dbo.MenuMeal as MM ON M.mealTypeId = MM.Id
     LEFT JOIN dbo.Users as U ON M.createdBy = U.Id
-    WHERE M.hospitalId = ${reqData.hospitalId}
+    WHERE M.hospitalId = ${reqData.hospitalId} ${mealTypeId != undefined ? "AND M.mealTypeId = " + mealTypeId : ""}
   `;
   let queryResult = await safeQuery(sql, queryString);
   if (!queryResult.success) {
@@ -54,6 +59,7 @@ meal.post("/merge", async (req, res) => {
     new FieldInfo("name", "other", true),
     new FieldInfo("description", "other", true),
     new FieldInfo("servedId", "number", true),
+    new FieldInfo("mealTypeId", "number", false),
     new FieldInfo("hospitalId", "number", false),
     new FieldInfo("createdBy", "number", false),
     new FieldInfo("isActive", "other", false),
