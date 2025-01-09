@@ -113,6 +113,7 @@ const ChefSpecialConfig = () => {
         appCycleDataChange={(field, value) =>
           handleCycleDataChange(field, value)
         }
+        mealTypes={mealTypes}
       />
       {currentCycle && mealTypes.length > 0 && (
         <div>

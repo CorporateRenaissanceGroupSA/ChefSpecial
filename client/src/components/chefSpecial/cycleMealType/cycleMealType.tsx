@@ -10,20 +10,24 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 
-interface MultiSelectDropdownProps {
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface cycleMealTypeProps {
   label?: string;
   options: string[];
   selected: string[];
   setSelected: (selected: string[]) => void;
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+const CycleMealType: React.FC<cycleMealTypeProps> = ({
   label = "Select Meals",
   options,
   selected,
   setSelected,
 }) => {
-
   const handleChange = (event: SelectChangeEvent<string[]>) => {
     const {
       target: { value },
@@ -52,4 +56,4 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   );
 };
 
-export default MultiSelectDropdown;
+export default CycleMealType;

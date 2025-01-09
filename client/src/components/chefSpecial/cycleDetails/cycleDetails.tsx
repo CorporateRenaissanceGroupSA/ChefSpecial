@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CycleData } from "../../../types";
-import MultiSelectDropdown from "../../MultiSelectDropdown";
+import { CycleData, MealType } from "../../../types";
 import { ViewColumnsIcon } from "@heroicons/react/24/outline";
 import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -10,6 +9,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CycleName, { SelectOption } from "../cycleName/cycleName";
+import CycleMealType from "../cycleMealType/cycleMealType";
 // import axios from "axios";
 
 const dateFieldTheme = (theme: any) =>
@@ -130,6 +130,7 @@ interface CycleSelectorProps {
   currentCycle: CycleData | undefined;
   appCycleSelect: (option: SelectOption | null) => void;
   appCycleDataChange: (field: string, value: any) => void;
+  mealTypes: MealType[];
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -140,20 +141,19 @@ function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
   }
 }
 
-// const options = [
-//   { value: "Spring 2024", label: "Spring2024" },
-//   { value: "Winter 2024", label: "Winter024" },
-// ];
 
 const CycleSelector: React.FC<CycleSelectorProps> = ({
   allCycles,
   currentCycle,
   appCycleSelect,
   appCycleDataChange,
+  mealTypes
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
+
+  const [mealTypeOptions, setMealTypeOptions] = useState([]);
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -179,6 +179,14 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     appCycleDataChange(field, value);
   };
   // const [dynamicOptions, setDynamicOptions] = useState(options);
+
+  useEffect(() => {
+    // let newOptions = allMealTypes.map(
+    //   (mealTypes) => cycleToOption(cycleData) as SelectOption
+    // );
+    console.log("Meal Type options updated: ", mealTypes);
+    // setMealTypeOptions(allMealTypes);
+  }, [mealTypes]);
 
   return (
     <div>
@@ -213,7 +221,15 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           /> */}
         </div>
 
-        <div className="col-span-3"></div>
+        <div className="col-span-1"></div>
+
+        <div className="col-span-2">
+          <CycleMealType
+            options={mealTypes}
+            selected={["Breakfast"]}
+            setSelected={(selected) => handleInputChange("meals", selected)}
+          />
+        </div>
 
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
@@ -339,14 +355,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
             /> */}
           </ThemeProvider>
         </div>
-
-        {/* <div className="col-span-2">
-          <MultiSelectDropdown
-            options={["Breakfast", "Lunch", "Supper"]}
-            selected={cycleData.meals}
-            setSelected={(selected) => handleInputChange("meals", selected)}
-          />
-        </div> */}
 
         <div className="flex justify-center items-center col-span-1">
           <ViewColumnsIcon
