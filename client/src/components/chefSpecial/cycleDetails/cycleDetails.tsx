@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CycleData } from "../../../types";
-import MultiSelectDropdown from "../../MultiSelectDropdown";
+import { CycleData, MealType } from "../../../types";
 import { ViewColumnsIcon } from "@heroicons/react/24/outline";
 import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -10,6 +9,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CycleName, { SelectOption } from "../cycleName/cycleName";
+import CycleMealType from "../cycleMealType/cycleMealType";
 // import axios from "axios";
 
 const dateFieldTheme = (theme: any) =>
@@ -130,6 +130,8 @@ interface CycleSelectorProps {
   currentCycle: CycleData | undefined;
   appCycleSelect: (option: SelectOption | null) => void;
   appCycleDataChange: (field: string, value: any) => void;
+  mealTypes: MealType[];
+  setSelectedMealTypes: any
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -140,20 +142,20 @@ function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
   }
 }
 
-// const options = [
-//   { value: "Spring 2024", label: "Spring2024" },
-//   { value: "Winter 2024", label: "Winter024" },
-// ];
 
 const CycleSelector: React.FC<CycleSelectorProps> = ({
   allCycles,
   currentCycle,
   appCycleSelect,
   appCycleDataChange,
+  mealTypes,
+  setSelectedMealTypes,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
+
+    const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([1, 2, 3]);
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -178,7 +180,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     console.log("Cycle data change: Field: " + field + " Value: " + value);
     appCycleDataChange(field, value);
   };
-  // const [dynamicOptions, setDynamicOptions] = useState(options);
+
+   useEffect(() => {
+    setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
+  }, [selectedMealTypes, setSelectedMealTypes]);
+
 
   return (
     <div>
@@ -192,28 +198,17 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
             }}
             placeholder="Cycle Name"
           />
-
-          {/* <CreatableSelect
-            options={dynamicOptions}
-            value={
-              dynamicOptions.find(
-                (option) => option.value === cycleData.cycleName
-              ) || null
-            }
-            onChange={(newOption) => {
-              if (
-                newOption &&
-                !dynamicOptions.some((opt) => opt.value === newOption.value)
-              ) {
-                setDynamicOptions([...dynamicOptions, newOption]);
-              }
-              handleInputChange("cycleName", newOption ? newOption.value : "");
-            }}
-            placeholder="Cycle Name"
-          /> */}
         </div>
 
-        <div className="col-span-3"></div>
+        <div className="col-span-1"></div>
+
+        <div className="col-span-2">
+          <CycleMealType
+            options={mealTypes}
+            selected={selectedMealTypes}
+            setSelected={setLocalSelectedMealTypes}
+          />
+        </div>
 
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
@@ -230,29 +225,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 />
               </DemoContainer>
             </LocalizationProvider>
-            {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={["DatePicker", "DatePicker"]}>
-                <DatePicker
-                  label="Cycle Date"
-                  defaultValue={dayjs(new Date())}
-                  onChange={(date: Dayjs | null) =>
-                    handleInputChange(
-                      "startDate",
-                      date ? date.toISOString() : ""
-                    )
-                  }
-                  slotProps={{
-                    day: {
-                      sx: {
-                        "&.MuiPickersDay-root.Mui-selected": {
-                          backgroundColor: "#FFB600",
-                        },
-                      },
-                    },
-                  }}
-                />
-              </DemoContainer>
-            </LocalizationProvider> */}
           </ThemeProvider>
         </div>
 
@@ -299,54 +271,8 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 // },
               }}
             />
-            {/* <TextField
-              id="filled-number"
-              label="Days in Cycle"
-              type="number"
-              variant="filled"
-              onChange={(e) =>
-                handleInputChange(
-                  "daysInCycle",
-                  e.target.value ? Number(e.target.value) : 0
-                )
-              }
-              defaultValue={8}
-              placeholder=""
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              sx={{
-                "& .MuiFilledInput-root": {
-                  "&:before": {
-                    borderBottom: "none", // Remove default border
-                  },
-                  "&:after": {
-                    borderBottom: "none", // Remove focused border
-                  },
-                  "&:hover:not(.Mui-disabled):before": {
-                    borderBottom: "none", // Remove hover effect
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  color: "#808080", // Default label color
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#808080", // Focused label color
-                },
-              }}
-            /> */}
           </ThemeProvider>
         </div>
-
-        {/* <div className="col-span-2">
-          <MultiSelectDropdown
-            options={["Breakfast", "Lunch", "Supper"]}
-            selected={cycleData.meals}
-            setSelected={(selected) => handleInputChange("meals", selected)}
-          />
-        </div> */}
 
         <div className="flex justify-center items-center col-span-1">
           <ViewColumnsIcon
