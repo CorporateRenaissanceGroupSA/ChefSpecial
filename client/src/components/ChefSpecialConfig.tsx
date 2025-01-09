@@ -15,15 +15,19 @@ import {
 const ChefSpecialConfig = () => {
   const [hospitalId, setHospitalId] = useState<number>(1);
   const [allCycles, setAllCycles] = useState<CycleData[]>([]);
-  const [allMeals, setAllMeals] = useState<Meal[]>([]);
-  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [currentCycle, setCurrentCycle] = useState<CycleData | undefined>(
     undefined
   );
 
+  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [selectedMealTypes, setSelectedMealTypes] = useState<number[]>([
+    1, 2, 3,
+  ]); // Default: Breakfast, Lunch, Dinner
+
   // loads all the mealTypes once when the app is loaded
   useEffect(() => {
-    getMealTypeList().then((result) => {
+    getMealTypeList(hospitalId).then((result) => {
       setMealTypes(result);
       console.log("Meal Types updated: ", result);
     });
@@ -114,15 +118,25 @@ const ChefSpecialConfig = () => {
           handleCycleDataChange(field, value)
         }
         mealTypes={mealTypes}
+        setSelectedMealTypes={setSelectedMealTypes}
       />
-      {currentCycle && mealTypes.length > 0 && (
+      {currentCycle && selectedMealTypes.length > 0 && (
         <div>
-          <MealTable
-            cycle={currentCycle}
-            mealType={mealTypes[0]}
-            allMeals={allMeals}
-          />
-          <MealTable
+          {selectedMealTypes.map((mealTypeId) => {
+            const mealType = mealTypes.find((mt) => mt.Id === mealTypeId);
+            return (
+              mealType && (
+                <MealTable
+                  key={mealTypeId}
+                  cycle={currentCycle}
+                  mealType={mealType!}
+                  allMeals={allMeals}
+                />
+              )
+            );
+          })}
+
+          {/* <MealTable
             cycle={currentCycle}
             mealType={mealTypes[1]}
             allMeals={allMeals}
@@ -131,7 +145,7 @@ const ChefSpecialConfig = () => {
             cycle={currentCycle}
             mealType={mealTypes[2]}
             allMeals={allMeals}
-          />
+          /> */}
         </div>
       )}
     </div>

@@ -10,30 +10,31 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 
-export interface SelectOption {
-  value: string;
-  label: string;
+export interface Option {
+  Id: number;
+  name: string;
 }
 
 interface cycleMealTypeProps {
   label?: string;
-  options: string[];
-  selected: string[];
-  setSelected: (selected: string[]) => void;
+  options: Option[];
+  selected: number[];
+  setSelected: (selected: number[]) => void;
 }
 
 const CycleMealType: React.FC<cycleMealTypeProps> = ({
-  label = "Select Meals",
+  label = "Meal Types",
   options,
   selected,
   setSelected,
 }) => {
-  const handleChange = (event: SelectChangeEvent<string[]>) => {
+  console.log(options)
+  const handleChange = (event: SelectChangeEvent<number[]>) => {
     const {
       target: { value },
     } = event;
     setSelected(
-      typeof value === "string" ? value.split(",") : (value as string[])
+      typeof value === "string" ? value.split(",").map(Number) : (value as number[])
     );
   };
 
@@ -44,11 +45,11 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
         multiple
         value={selected}
         onChange={handleChange}
-        renderValue={(selected) => (selected as string[]).join(", ")}
+        renderValue={(selected) => options.filter((option) => selected.includes(option.Id)).map((option) => option.name).join(",")}
       >
         {options.map((option) => (
-          <MenuItem key={option} value={option}>
-            <ListItemText primary={option} />
+          <MenuItem key={option.Id} value={option.Id}>
+            <ListItemText primary={option.name} />
           </MenuItem>
         ))}
       </Select>

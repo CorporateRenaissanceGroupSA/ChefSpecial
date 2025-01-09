@@ -24,18 +24,17 @@ export async function getMealsList(hospitalId: number): Promise<Meal[]> {
 }
 
 // utility function to get list of meal types
-export async function getMealTypeList(): Promise<MealType[]> {
+export async function getMealTypeList(hospitalId: number): Promise<MealType[]> {
   let result: CycleData[] = [];
   try {
-    let response = await axios.post(
-      `${process.env.REACT_APP_API}/meal-types`,
-      {}
-    );
+    let response = await axios.post(`${process.env.REACT_APP_API}/meal-types`, {
+      hospitalId,
+    });
     console.log("Meal Type list response: ", response);
     if (response.status === 200) {
       result = response.data.map((mealTypeData: any) => {
         return {
-          Id: mealTypeData.Id,
+          Id: mealTypeData.mealId,
           name: mealTypeData.mealType,
         };
       });

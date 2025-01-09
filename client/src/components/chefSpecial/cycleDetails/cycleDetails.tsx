@@ -131,6 +131,7 @@ interface CycleSelectorProps {
   appCycleSelect: (option: SelectOption | null) => void;
   appCycleDataChange: (field: string, value: any) => void;
   mealTypes: MealType[];
+  setSelectedMealTypes: any
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -147,13 +148,14 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   currentCycle,
   appCycleSelect,
   appCycleDataChange,
-  mealTypes
+  mealTypes,
+  setSelectedMealTypes,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
 
-  const [mealTypeOptions, setMealTypeOptions] = useState([]);
+    const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([1, 2, 3]);
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -178,15 +180,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     console.log("Cycle data change: Field: " + field + " Value: " + value);
     appCycleDataChange(field, value);
   };
-  // const [dynamicOptions, setDynamicOptions] = useState(options);
 
-  useEffect(() => {
-    // let newOptions = allMealTypes.map(
-    //   (mealTypes) => cycleToOption(cycleData) as SelectOption
-    // );
-    console.log("Meal Type options updated: ", mealTypes);
-    // setMealTypeOptions(allMealTypes);
-  }, [mealTypes]);
+   useEffect(() => {
+    setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
+  }, [selectedMealTypes, setSelectedMealTypes]);
+
 
   return (
     <div>
@@ -200,25 +198,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
             }}
             placeholder="Cycle Name"
           />
-
-          {/* <CreatableSelect
-            options={dynamicOptions}
-            value={
-              dynamicOptions.find(
-                (option) => option.value === cycleData.cycleName
-              ) || null
-            }
-            onChange={(newOption) => {
-              if (
-                newOption &&
-                !dynamicOptions.some((opt) => opt.value === newOption.value)
-              ) {
-                setDynamicOptions([...dynamicOptions, newOption]);
-              }
-              handleInputChange("cycleName", newOption ? newOption.value : "");
-            }}
-            placeholder="Cycle Name"
-          /> */}
         </div>
 
         <div className="col-span-1"></div>
@@ -226,8 +205,8 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
         <div className="col-span-2">
           <CycleMealType
             options={mealTypes}
-            selected={["Breakfast"]}
-            setSelected={(selected) => handleInputChange("meals", selected)}
+            selected={selectedMealTypes}
+            setSelected={setLocalSelectedMealTypes}
           />
         </div>
 
@@ -246,29 +225,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 />
               </DemoContainer>
             </LocalizationProvider>
-            {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={["DatePicker", "DatePicker"]}>
-                <DatePicker
-                  label="Cycle Date"
-                  defaultValue={dayjs(new Date())}
-                  onChange={(date: Dayjs | null) =>
-                    handleInputChange(
-                      "startDate",
-                      date ? date.toISOString() : ""
-                    )
-                  }
-                  slotProps={{
-                    day: {
-                      sx: {
-                        "&.MuiPickersDay-root.Mui-selected": {
-                          backgroundColor: "#FFB600",
-                        },
-                      },
-                    },
-                  }}
-                />
-              </DemoContainer>
-            </LocalizationProvider> */}
           </ThemeProvider>
         </div>
 
@@ -315,44 +271,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 // },
               }}
             />
-            {/* <TextField
-              id="filled-number"
-              label="Days in Cycle"
-              type="number"
-              variant="filled"
-              onChange={(e) =>
-                handleInputChange(
-                  "daysInCycle",
-                  e.target.value ? Number(e.target.value) : 0
-                )
-              }
-              defaultValue={8}
-              placeholder=""
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              sx={{
-                "& .MuiFilledInput-root": {
-                  "&:before": {
-                    borderBottom: "none", // Remove default border
-                  },
-                  "&:after": {
-                    borderBottom: "none", // Remove focused border
-                  },
-                  "&:hover:not(.Mui-disabled):before": {
-                    borderBottom: "none", // Remove hover effect
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  color: "#808080", // Default label color
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#808080", // Focused label color
-                },
-              }}
-            /> */}
           </ThemeProvider>
         </div>
 
