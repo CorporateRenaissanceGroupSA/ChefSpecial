@@ -69,6 +69,7 @@ const ChefSpecialConfig = () => {
         name: option.label,
         cycleDays: 3,
         startDate: new Date().toJSON(),
+        endDate: "", // should be null need to be changed
         createdAt: "",
         createdBy: 0,
         isActive: true,
