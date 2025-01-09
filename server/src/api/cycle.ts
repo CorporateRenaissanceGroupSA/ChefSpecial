@@ -87,6 +87,38 @@ cycle.post("/info", async (req, res) => {
   });
 });
 
+cycle.post("/selected-mealtypes", async (req, res) => {
+  logger.api('Received request to "/cycle/selected-mealtypes" api endpoint');
+  let reqData = req.body;
+  logger.api("Req Data: ", reqData);
+  let requiredFieldMissing = checkRequiredFields(reqData, ["cycleId"]);
+  if (requiredFieldMissing) {
+    logger.error("Required input field missing: " + requiredFieldMissing);
+    res
+      .status(400)
+      .send("Required input field missing: " + requiredFieldMissing);
+    return;
+  }
+
+  const queryStr = `
+    SELECT
+    MT.Id as mealTypeId, MT.mealDescription as mealType
+    FROM Ems.CSCycleItem as CI
+    LEFT JOIN dbo.MenuMeal as MT ON CI.mealTypeId = MT.Id
+    WHERE CI.cycleId = '${reqData.cycleId}'
+    GROUP BY MT.Id, MT.mealDescription
+    `;
+  let query = await safeQuery(sql, queryStr);
+  if (!query.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: query.result,
+    });
+    return;
+  }
+  res.send({ mealItems: query.result.recordset });
+});
+
 cycle.post("/meal-days", async (req, res) => {
   logger.api('Received request to "/cycle/meal-days" api endpoint');
   let reqData = req.body;
