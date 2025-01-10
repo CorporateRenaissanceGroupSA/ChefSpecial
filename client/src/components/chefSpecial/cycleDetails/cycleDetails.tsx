@@ -131,7 +131,7 @@ interface CycleSelectorProps {
   appCycleSelect: (option: SelectOption | null) => void;
   appCycleDataChange: (field: string, value: any) => void;
   mealTypes: MealType[];
-  setSelectedMealTypes: any
+  setSelectedMealTypes: any;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -141,7 +141,6 @@ function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
     return null;
   }
 }
-
 
 const CycleSelector: React.FC<CycleSelectorProps> = ({
   allCycles,
@@ -155,7 +154,18 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
 
-    const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([1, 2, 3]);
+  const [startDate, setStartDate] = useState<Dayjs | null>(
+    currentCycle?.startDate ? dayjs(currentCycle.startDate) : null
+  );
+  const [endDate, setEndDate] = useState<Dayjs | null>(
+    currentCycle?.endDate ? dayjs(currentCycle.endDate) : null
+  );
+
+  const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
+    1, 2, 3,
+  ]);
+
+  const [cleared, setCleared] = React.useState(false);
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -168,6 +178,8 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   useEffect(() => {
     console.log("Changing current cycle option: ", currentCycle);
     setCurrentCycleOption(cycleToOption(currentCycle));
+    if (currentCycle?.startDate) setStartDate(dayjs(currentCycle.startDate));
+    if (currentCycle?.endDate) setEndDate(dayjs(currentCycle.endDate));
   }, [currentCycle]);
 
   const handleCycleInputChange = (option: SelectOption | null) => {
@@ -181,15 +193,26 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     appCycleDataChange(field, value);
   };
 
-   useEffect(() => {
+  useEffect(() => {
     setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
   }, [selectedMealTypes, setSelectedMealTypes]);
 
+  // End date datepicker clearing value
+  useEffect(() => {
+    if (cleared) {
+      const timeout = setTimeout(() => {
+        setCleared(false);
+      }, 1500);
+
+      return () => clearTimeout(timeout);
+    }
+    return () => {};
+  }, [cleared]);
 
   return (
     <div>
       <div className="grid grid-cols-12 space-x-3 p-3">
-        <div className="col-span-4">
+        <div className="col-span-3">
           <CycleName
             options={allCycleOptions}
             value={currentCycleOption}
@@ -200,14 +223,14 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           />
         </div>
 
-        <div className="col-span-1"></div>
-
-        <div className="col-span-2">
-          <CycleMealType
-            options={mealTypes}
-            selected={selectedMealTypes}
-            setSelected={setLocalSelectedMealTypes}
-          />
+        <div className="col-span-3">
+          <ThemeProvider theme={inputFieldTheme}>
+            <CycleMealType
+              options={mealTypes}
+              selected={selectedMealTypes}
+              setSelected={setLocalSelectedMealTypes}
+            />
+          </ThemeProvider>
         </div>
 
         <div className="col-span-2 flex justify-end">
@@ -218,9 +241,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                   defaultValue={dayjs(
                     currentCycle?.startDate || new Date().toJSON()
                   )}
-                  onChange={(date: Dayjs | null) =>
-                    handleInputChange("startDate", date ? date.toJSON() : "")
-                  }
+                  value={startDate}
+                  onChange={(date: Dayjs | null) => {
+                    setStartDate(date);
+                    handleInputChange("startDate", date ? date.toJSON() : "");
+                  }}
                   label="Cycle Start Date"
                 />
               </DemoContainer>
@@ -228,7 +253,30 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-2">
+        <div className="col-span-2 flex justify-end">
+          <ThemeProvider theme={dateFieldTheme}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DemoContainer components={["DatePicker", "DatePicker"]}>
+                <DatePicker
+                  onChange={(date: Dayjs | null) => {
+                    setEndDate(date);
+                    handleInputChange(
+                      "endDate",
+                      date ? date.startOf("day").toISOString() : ""
+                    );
+                  }}
+                  value={endDate}
+                  slotProps={{
+                    field: { clearable: true, onClear: () => setCleared(true) },
+                  }}
+                  label="Cycle End Date"
+                />
+              </DemoContainer>
+            </LocalizationProvider>
+          </ThemeProvider>
+        </div>
+
+        <div className="col-span-1">
           <ThemeProvider theme={inputFieldTheme}>
             <TextField
               id="filled-number"
@@ -242,7 +290,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 )
               }
               value={currentCycle?.cycleDays}
-              placeholder=""
               slotProps={{
                 inputLabel: {
                   shrink: true,
@@ -274,7 +321,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="flex justify-center items-center col-span-1">
+        <div className="flex justify-center items-center">
           <ViewColumnsIcon
             className="size-12 text-[#FFB600]"
             strokeWidth={0.7}

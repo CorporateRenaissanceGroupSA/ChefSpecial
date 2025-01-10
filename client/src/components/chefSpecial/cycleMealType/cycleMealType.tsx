@@ -39,7 +39,7 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
   };
 
   return (
-    <FormControl variant="standard" sx={{ width: 230 }}>
+    <FormControl variant="filled" fullWidth>
       <InputLabel>{label}</InputLabel>
       <Select
         multiple

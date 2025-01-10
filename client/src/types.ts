@@ -23,6 +23,7 @@ export interface CycleData {
   name: string;
   cycleDays: number;
   startDate: string;
+  endDate: string;
   createdAt: string;
   createdBy: number;
   isActive: boolean;
