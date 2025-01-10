@@ -20,7 +20,7 @@ export function formattedDate(date: Date): string {
 export function checkDates(obj: any, fields: FieldInfo[]) {
   let errorField = fields.find((field) => {
     let result = false;
-    if (field.type == "date" && obj[field.name]) {
+    if (field.type == "date" && obj[field.name] && obj[field.name] != "null") {
       logger.debug(
         "Checking date field: " + field.name + " => " + obj[field.name]
       );
