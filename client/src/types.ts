@@ -1,11 +1,20 @@
 export interface Meal {
   Id: number;
   name: string;
+  description: string;
+  mealTypeId: number;
+  servedId: number;
+  served: string;
 }
 
 export interface MealType {
   Id: number;
   name: string;
+}
+
+export interface SelectedMealTypeData {
+  mealTypeId: number;
+  mealType: string;
 }
 
 export interface MealDays {
@@ -27,6 +36,10 @@ export interface CycleData {
   createdAt: string;
   createdBy: number;
   isActive: boolean;
+  description: string;
+  mealTypeId: number;
+  servedId: number;
+  served: string;
 }
 
 export interface Option {

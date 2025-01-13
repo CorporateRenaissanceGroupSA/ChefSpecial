@@ -10,6 +10,7 @@ import {
   getMealsList,
   getMealTypeList,
   mergeCycleInfo,
+  getSelectedMealTypes,
 } from "../utils/db-utils";
 
 const ChefSpecialConfig = () => {
@@ -33,6 +34,14 @@ const ChefSpecialConfig = () => {
     });
   }, []);
 
+  // // loads all the mealTypes once when the app is loaded
+  // useEffect(() => {
+  //   getSelectedMealTypes(11).then((result) => {
+  //     // setMealTypes(result);
+  //     console.log("Selected Meal Types updated: ", result);
+  //   });
+  // }, []);
+
   // Loads all the Cycles and Meals available for a hospital every time the hospitalId changes
   useEffect(() => {
     getCycleList(hospitalId).then((result) => {
@@ -52,6 +61,7 @@ const ChefSpecialConfig = () => {
     if (!option) {
       console.log("Setting current cycle to Undefined");
       setCurrentCycle(undefined);
+      setSelectedMealTypes([1, 2, 3]);
       return;
     }
 
@@ -69,19 +79,41 @@ const ChefSpecialConfig = () => {
         name: option.label,
         cycleDays: 3,
         startDate: new Date().toJSON(),
-        endDate: "", // should be null need to be changed
+        endDate: "null",
         createdAt: "",
         createdBy: 0,
         isActive: true,
+        description: "",
+        mealTypeId: 0,
+        servedId: 0,
+        served: "",
       });
       console.log("New Cycle id", existingCycleId);
       addNewCycle = true;
+      setSelectedMealTypes([1, 2, 3]);
     } else {
       existingCycleId = existingCycle.Id;
     }
     let cycleDetail = await getCycleDetail(existingCycleId as number);
+    let selectedMealTypeIds = await getSelectedMealTypes(
+      existingCycleId as number
+    );
+    console.log("selected Meal Types", selectedMealTypeIds);
     if (cycleDetail) {
       setCurrentCycle(cycleDetail.cycleInfo);
+      // setSelectedMealTypes(selectedMealTypes);
+
+      // if(selectedMealTypeIds.length > 0)
+
+      if ( Array.isArray(selectedMealTypeIds) && selectedMealTypeIds.length > 0) {
+        setSelectedMealTypes(selectedMealTypeIds); // Update meal type IDs
+      } else {
+        setSelectedMealTypes([1, 2, 3]);
+      }
+      // } else {
+      //   console.error("Invalid selectedMealTypeIds format", selectedMealTypeIds);
+      // }
+
       if (addNewCycle) {
         setAllCycles((prev) => [...prev, cycleDetail!.cycleInfo]);
       }
@@ -119,6 +151,7 @@ const ChefSpecialConfig = () => {
           handleCycleDataChange(field, value)
         }
         mealTypes={mealTypes}
+        selectedMealTypes={selectedMealTypes}
         setSelectedMealTypes={setSelectedMealTypes}
       />
       {currentCycle && selectedMealTypes.length > 0 && (
@@ -136,17 +169,6 @@ const ChefSpecialConfig = () => {
               )
             );
           })}
-
-          {/* <MealTable
-            cycle={currentCycle}
-            mealType={mealTypes[1]}
-            allMeals={allMeals}
-          />
-          <MealTable
-            cycle={currentCycle}
-            mealType={mealTypes[2]}
-            allMeals={allMeals}
-          /> */}
         </div>
       )}
     </div>

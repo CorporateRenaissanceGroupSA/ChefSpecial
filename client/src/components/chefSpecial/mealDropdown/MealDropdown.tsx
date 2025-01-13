@@ -62,6 +62,10 @@ function optionToMeal(option: Option | null): Meal | null {
     return {
       Id: option.value,
       name: option.label,
+      description: "",
+      mealTypeId: 0,
+      servedId: 0,
+      served: "",
     };
   }
 }

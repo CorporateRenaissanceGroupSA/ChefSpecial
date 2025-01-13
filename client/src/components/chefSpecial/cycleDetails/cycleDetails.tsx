@@ -132,6 +132,7 @@ interface CycleSelectorProps {
   appCycleDataChange: (field: string, value: any) => void;
   mealTypes: MealType[];
   setSelectedMealTypes: any;
+  selectedMealTypes: any;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -149,6 +150,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   appCycleDataChange,
   mealTypes,
   setSelectedMealTypes,
+  selectedMealTypes,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
@@ -161,9 +163,9 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     currentCycle?.endDate ? dayjs(currentCycle.endDate) : null
   );
 
-  const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
-    1, 2, 3,
-  ]);
+  // const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
+  //   1, 2, 3,
+  // ]);
 
   const [cleared, setCleared] = React.useState(false);
 
@@ -180,7 +182,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     setCurrentCycleOption(cycleToOption(currentCycle));
     if (currentCycle?.startDate) setStartDate(dayjs(currentCycle.startDate));
     if (currentCycle?.endDate) setEndDate(dayjs(currentCycle.endDate));
-  }, [currentCycle]);
+
+    if (!currentCycle) {
+      setSelectedMealTypes([1, 2, 3]); // Default meal types for new cycles
+    }
+  }, [currentCycle, setSelectedMealTypes]);
 
   const handleCycleInputChange = (option: SelectOption | null) => {
     console.log("Detected cycle option change: ", option);
@@ -193,9 +199,19 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     appCycleDataChange(field, value);
   };
 
-  useEffect(() => {
-    setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
-  }, [selectedMealTypes, setSelectedMealTypes]);
+  // useEffect(() => {
+  //   setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
+  // }, [selectedMealTypes, setSelectedMealTypes]);
+
+  // useEffect(() => {
+  //   if (currentCycle && currentCycle.mealTypeIds) {
+  //     // Set meal types for an existing cycle
+  //     setLocalSelectedMealTypes(currentCycle.mealTypeIds);
+  //   } else {
+  //     // Default meal types for a new cycle
+  //     setLocalSelectedMealTypes([1, 2, 3]); // IDs for Lunch, Break, Dinner
+  //   }
+  // }, [currentCycle]);
 
   // End date datepicker clearing value
   useEffect(() => {
@@ -228,7 +244,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
             <CycleMealType
               options={mealTypes}
               selected={selectedMealTypes}
-              setSelected={setLocalSelectedMealTypes}
+              setSelected={setSelectedMealTypes}
             />
           </ThemeProvider>
         </div>
