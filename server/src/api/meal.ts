@@ -29,7 +29,7 @@ meal.post("/list", async (req, res) => {
     mealTypeId = reqData.mealTypeId;
   }
   let queryString = `
-    SELECT M.*, H.Name as hospitalName, I.ServedState as served, U.name as createdByName FROM Ems.CSMeal as M
+    SELECT M.*, MM.MealDescription as mealType, H.Name as hospitalName, I.ServedState as served, U.name as createdByName FROM Ems.CSMeal as M
     LEFT JOIN dbo.Hospital as H ON M.hospitalId = H.Id
     LEFT JOIN dbo.ItemServed as I ON M.servedId = I.Id
     LEFT JOIN dbo.MenuMeal as MM ON M.mealTypeId = MM.Id
