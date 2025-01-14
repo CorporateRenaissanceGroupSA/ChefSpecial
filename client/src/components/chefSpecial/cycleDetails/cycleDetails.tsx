@@ -137,7 +137,18 @@ interface CycleSelectorProps {
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
   if (cycleData) {
-    return { label: cycleData!.name, value: cycleData!.Id.toString() };
+    // Format dates to DD/MM/YYYY
+    const formattedStartDate = cycleData.startDate
+      ? dayjs(cycleData.startDate).format("DD/MM/YYYY")
+      : "N/A";
+    const formattedEndDate = cycleData.endDate
+      ? dayjs(cycleData.endDate).format("DD/MM/YYYY")
+      : "N/A";
+
+    return {
+      label: `${cycleData.name} (${formattedStartDate} - ${formattedEndDate})`,
+      value: cycleData!.Id.toString(),
+    };
   } else {
     return null;
   }
@@ -181,7 +192,11 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     console.log("Changing current cycle option: ", currentCycle);
     setCurrentCycleOption(cycleToOption(currentCycle));
     if (currentCycle?.startDate) setStartDate(dayjs(currentCycle.startDate));
-    if (currentCycle?.endDate) setEndDate(dayjs(currentCycle.endDate));
+    if (currentCycle?.endDate) {
+      setEndDate(dayjs(currentCycle.endDate));
+    } else {
+      setEndDate(null); // Reset endDate if currentCycle does not have one
+    }
 
     if (!currentCycle) {
       setSelectedMealTypes([1, 2, 3]); // Default meal types for new cycles
@@ -263,6 +278,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                     handleInputChange("startDate", date ? date.toJSON() : "");
                   }}
                   label="Cycle Start Date"
+                  format="DD/MM/YYYY"
                 />
               </DemoContainer>
             </LocalizationProvider>
@@ -286,6 +302,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                     field: { clearable: true, onClear: () => setCleared(true) },
                   }}
                   label="Cycle End Date"
+                  format="DD/MM/YYYY"
                 />
               </DemoContainer>
             </LocalizationProvider>
@@ -329,9 +346,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 "& .MuiInputLabel-root.Mui-focused": {
                   color: "#808080", // Focused label color
                 },
-                // "& .MuiInputBase-input": {
-                //   padding: "15px 13px", // Focused label color
-                // },
               }}
             />
           </ThemeProvider>

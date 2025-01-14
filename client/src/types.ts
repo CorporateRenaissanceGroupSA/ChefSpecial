@@ -4,7 +4,6 @@ export interface Meal {
   description: string;
   mealTypeId: number;
   servedId: number;
-  served: string;
 }
 
 export interface MealType {
@@ -15,6 +14,11 @@ export interface MealType {
 export interface SelectedMealTypeData {
   mealTypeId: number;
   mealType: string;
+}
+
+export interface Served {
+  Id: number;
+  name: string;
 }
 
 export interface MealDays {

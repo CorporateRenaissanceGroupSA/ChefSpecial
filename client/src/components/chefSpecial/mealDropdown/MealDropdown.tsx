@@ -41,18 +41,18 @@ interface MealDropdownProps {
   allMeals: Meal[];
   selectedMeal: Meal | null;
   onChange: (newMeal: Meal | null) => void;
+  mealTypeId: number;
 }
 
 // utility function to convert Meal data to Option data
 function mealToOption(meal: Meal | null): Option | null {
-  if (meal) {
+  if (meal && meal.Id !== 0 && meal.name) {
     return {
       value: meal.Id,
       label: meal.name,
     };
-  } else {
-    return null;
   }
+  return null;
 }
 // utility function to convert Option data to Meal data
 function optionToMeal(option: Option | null): Meal | null {
@@ -65,7 +65,6 @@ function optionToMeal(option: Option | null): Meal | null {
       description: "",
       mealTypeId: 0,
       servedId: 0,
-      served: "",
     };
   }
 }
@@ -74,22 +73,28 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
   allMeals,
   selectedMeal,
   onChange,
+  mealTypeId,
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
+useEffect(() => {
+  console.log("Selected Option:", selectedOption);
+  console.log("Available Options:", options);
+}, [selectedOption, options]);
 
   // convert meals to options every time allMeals changes
   useEffect(() => {
-    let newOptions: Option[] = [];
-    allMeals.forEach((meal) => {
-      let newOption = mealToOption(meal);
-      if (newOption) {
-        newOptions.push(newOption);
-      }
-    });
-    console.log("All Meal options: ", newOptions);
-    setOptions(newOptions);
-  }, [allMeals]);
+    const filteredOptions = allMeals
+      .filter((meal) => meal.mealTypeId === mealTypeId) // Filter by mealTypeId
+      .map((meal) => mealToOption(meal))
+      .filter((option): option is Option => option !== null); // Ensure no null values
+
+    console.log(
+      `Filtered Meal options for mealTypeId ${mealTypeId}:`,
+      filteredOptions
+    );
+    setOptions(filteredOptions);
+  }, [allMeals, mealTypeId]);
 
   // convert selectedMeal to Option and set as selected option every time selectedMeal changes
   useEffect(() => {
@@ -100,9 +105,10 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
     <Select
       options={options}
       value={selectedOption}
-      onChange={(selectedOption: SingleValue<Option>) =>
-        onChange(optionToMeal(selectedOption))
-      }
+      onChange={(selectedOption: SingleValue<Option>) => {
+        setSelectedOption(selectedOption); // Update local state
+        onChange(optionToMeal(selectedOption)); // Notify parent
+      }}
       styles={customStyles}
       menuPortalTarget={document.body} // Render dropdown menu outside of the table
       menuPosition="fixed" // Ensure proper positioning

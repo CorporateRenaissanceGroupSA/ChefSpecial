@@ -34,6 +34,7 @@ export function startApi(port: number = 4001) {
     JOIN dbo.MenuItem as MI ON HM.Menu = MI.Menu
     JOIN dbo.MenuMeal as MM ON MM.id = MI.Meal
     WHERE H.Id = ${reqData.hospitalId}
+    ORDER BY MM.Id ASC
     ;
     `;
 
