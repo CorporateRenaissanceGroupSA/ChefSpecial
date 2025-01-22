@@ -35,7 +35,8 @@ const App: React.FC = () => {
         <Tab className="tabs__item" label="Chef Special" />
         <Tab className="tabs__item" label="Chef Special Items" />
         <Tab className="tabs__item" label="Meal Times" />
-        <Tab className="tabs__item" label="Notes" />
+        <Tab className="tabs__item" label="Alerts" />
+        <Tab className="tabs__item" label="Patient Alerts" />
       </Tabs>
       {selectedTab === 0 && (
         <ChefSpecialConfig
@@ -57,7 +58,13 @@ const App: React.FC = () => {
 
       {selectedTab === 3 && (
         <div>
-          <h2>Notes</h2>
+          <h2>Alerts</h2>
+        </div>
+      )}
+
+      {selectedTab === 4 && (
+        <div>
+          <h2>Patient Alerts</h2>
         </div>
       )}
     </div>

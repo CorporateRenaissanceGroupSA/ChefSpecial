@@ -4,6 +4,7 @@ export interface Meal {
   description: string;
   mealTypeId: number;
   servedId: number;
+  isActive: boolean;
 }
 
 export interface MealType {
@@ -28,7 +29,7 @@ export interface MealDays {
   mealId: number;
   mealName: string;
   days: boolean[];
-}
+} 
 
 export interface CycleData {
   Id: number;
@@ -44,6 +45,7 @@ export interface CycleData {
   mealTypeId: number;
   servedId: number;
   served: string;
+  itemIsActive: boolean;
 }
 
 export interface Option {

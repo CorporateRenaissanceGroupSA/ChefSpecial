@@ -323,6 +323,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 )
               }
               value={currentCycle?.cycleDays}
+              InputProps={{ inputProps: { min: 0, max: 21 } }}
               slotProps={{
                 inputLabel: {
                   shrink: true,

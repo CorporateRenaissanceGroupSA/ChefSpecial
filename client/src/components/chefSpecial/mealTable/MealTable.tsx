@@ -283,6 +283,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                         description: "",
                         mealTypeId: 0,
                         servedId: 0,
+                        isActive: true
                       }}
                       onChange={(newMeal) =>
                         handleMealChange(
