@@ -40,12 +40,21 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
 
   return (
     <FormControl variant="filled" fullWidth>
-      <InputLabel>{label}</InputLabel>
+      <InputLabel
+      >
+        {label}
+      </InputLabel>
       <Select
+        disableUnderline
         multiple
         value={selected}
         onChange={handleChange}
-        renderValue={(selected) => options.filter((option) => selected.includes(option.Id)).map((option) => option.name).join(",")}
+        renderValue={(selected) =>
+          options
+            .filter((option) => selected.includes(option.Id))
+            .map((option) => option.name)
+            .join(",")
+        }
       >
         {options.map((option) => (
           <MenuItem key={option.Id} value={option.Id}>

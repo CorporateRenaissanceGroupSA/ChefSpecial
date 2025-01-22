@@ -132,11 +132,23 @@ interface CycleSelectorProps {
   appCycleDataChange: (field: string, value: any) => void;
   mealTypes: MealType[];
   setSelectedMealTypes: any;
+  selectedMealTypes: any;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
   if (cycleData) {
-    return { label: cycleData!.name, value: cycleData!.Id.toString() };
+    // Format dates to DD/MM/YYYY
+    const formattedStartDate = cycleData.startDate
+      ? dayjs(cycleData.startDate).format("DD/MM/YYYY")
+      : "N/A";
+    const formattedEndDate = cycleData.endDate
+      ? dayjs(cycleData.endDate).format("DD/MM/YYYY")
+      : "N/A";
+
+    return {
+      label: `${cycleData.name} (${formattedStartDate} - ${formattedEndDate})`,
+      value: cycleData!.Id.toString(),
+    };
   } else {
     return null;
   }
@@ -149,6 +161,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   appCycleDataChange,
   mealTypes,
   setSelectedMealTypes,
+  selectedMealTypes,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
@@ -161,9 +174,9 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     currentCycle?.endDate ? dayjs(currentCycle.endDate) : null
   );
 
-  const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
-    1, 2, 3,
-  ]);
+  // const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
+  //   1, 2, 3,
+  // ]);
 
   const [cleared, setCleared] = React.useState(false);
 
@@ -179,8 +192,16 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     console.log("Changing current cycle option: ", currentCycle);
     setCurrentCycleOption(cycleToOption(currentCycle));
     if (currentCycle?.startDate) setStartDate(dayjs(currentCycle.startDate));
-    if (currentCycle?.endDate) setEndDate(dayjs(currentCycle.endDate));
-  }, [currentCycle]);
+    if (currentCycle?.endDate) {
+      setEndDate(dayjs(currentCycle.endDate));
+    } else {
+      setEndDate(null); // Reset endDate if currentCycle does not have one
+    }
+
+    if (!currentCycle) {
+      setSelectedMealTypes([1, 2, 3]); // Default meal types for new cycles
+    }
+  }, [currentCycle, setSelectedMealTypes]);
 
   const handleCycleInputChange = (option: SelectOption | null) => {
     console.log("Detected cycle option change: ", option);
@@ -193,9 +214,19 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     appCycleDataChange(field, value);
   };
 
-  useEffect(() => {
-    setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
-  }, [selectedMealTypes, setSelectedMealTypes]);
+  // useEffect(() => {
+  //   setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
+  // }, [selectedMealTypes, setSelectedMealTypes]);
+
+  // useEffect(() => {
+  //   if (currentCycle && currentCycle.mealTypeIds) {
+  //     // Set meal types for an existing cycle
+  //     setLocalSelectedMealTypes(currentCycle.mealTypeIds);
+  //   } else {
+  //     // Default meal types for a new cycle
+  //     setLocalSelectedMealTypes([1, 2, 3]); // IDs for Lunch, Break, Dinner
+  //   }
+  // }, [currentCycle]);
 
   // End date datepicker clearing value
   useEffect(() => {
@@ -228,7 +259,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
             <CycleMealType
               options={mealTypes}
               selected={selectedMealTypes}
-              setSelected={setLocalSelectedMealTypes}
+              setSelected={setSelectedMealTypes}
             />
           </ThemeProvider>
         </div>
@@ -247,6 +278,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                     handleInputChange("startDate", date ? date.toJSON() : "");
                   }}
                   label="Cycle Start Date"
+                  format="DD/MM/YYYY"
                 />
               </DemoContainer>
             </LocalizationProvider>
@@ -270,6 +302,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                     field: { clearable: true, onClear: () => setCleared(true) },
                   }}
                   label="Cycle End Date"
+                  format="DD/MM/YYYY"
                 />
               </DemoContainer>
             </LocalizationProvider>
@@ -313,9 +346,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
                 "& .MuiInputLabel-root.Mui-focused": {
                   color: "#808080", // Focused label color
                 },
-                // "& .MuiInputBase-input": {
-                //   padding: "15px 13px", // Focused label color
-                // },
               }}
             />
           </ThemeProvider>

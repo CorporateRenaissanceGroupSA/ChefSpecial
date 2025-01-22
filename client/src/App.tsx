@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from "react";
 import "./App.scss";
-import { Tabs, Grid2, List, ListItem, Box } from "@mui/material";
+import { Tabs, Tab } from "@mui/material";
 import ChefSpecialConfig from "./components/ChefSpecialConfig";
+import MealItems from "./components/chefSpecial/mealItems/MealItems";
+import { getMealTypeList, getMealsList } from "./utils/db-utils";
+import { Meal, MealType } from "./types";
 
 const App: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
+  const [hospitalId] = useState<number>(1);
+  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+
+  useEffect(() => {
+    // Load meal types and meals once on app load
+    getMealTypeList(hospitalId).then((result) => {
+      setMealTypes(result);
+      console.log("Meal Types updated: ", result);
+    });
+
+    getMealsList(hospitalId).then((result) => {
+      setAllMeals(result);
+      console.log("All meals updated.", result);
+    });
+  }, [hospitalId]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -13,39 +32,33 @@ const App: React.FC = () => {
   return (
     <div className="">
       <Tabs className="tabs" value={selectedTab} onChange={handleTabChange}>
-        <Grid2 container className="tabs__list">
-          <Grid2>
-            <Grid2 container>
-              <Grid2>
-                <List
-                  className="tabs__list-list"
-                  style={{ paddingTop: "6px", paddingBottom: "0px" }}
-                >
-                  <ListItem className="tabs__item tabs__item--selected">
-                    Chef Special
-                  </ListItem>
-                  <ListItem className="tabs__item">Meal Times</ListItem>
-                  <ListItem className="tabs__item">Notes</ListItem>
-                </List>
-              </Grid2>
-            </Grid2>
-          </Grid2>
-        </Grid2>
+        <Tab className="tabs__item" label="Chef Special" />
+        <Tab className="tabs__item" label="Chef Special Items" />
+        <Tab className="tabs__item" label="Meal Times" />
+        <Tab className="tabs__item" label="Notes" />
       </Tabs>
       {selectedTab === 0 && (
-        <ChefSpecialConfig />
+        <ChefSpecialConfig
+          key={selectedTab}
+          allMeals={allMeals}
+          mealTypes={mealTypes}
+        />
       )}
 
       {selectedTab === 1 && (
-        <Box sx={{ padding: 2 }}>
-          <h2>Meal Times</h2>
-        </Box>
+        <MealItems allMeals={allMeals} mealTypes={mealTypes} />
       )}
 
       {selectedTab === 2 && (
-        <Box sx={{ padding: 2 }}>
+        <div>
+          <h2>Meal Times</h2>
+        </div>
+      )}
+
+      {selectedTab === 3 && (
+        <div>
           <h2>Notes</h2>
-        </Box>
+        </div>
       )}
     </div>
   );

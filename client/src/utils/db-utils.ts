@@ -1,5 +1,5 @@
 import axios from "axios";
-import { CycleData, Meal, MealDays, MealType } from "../types";
+import { CycleData, Meal, MealDays, MealType, Served } from "../types";
 
 // utility function to get a list of meals for a hospital
 export async function getMealsList(hospitalId: number): Promise<Meal[]> {
@@ -14,6 +14,10 @@ export async function getMealsList(hospitalId: number): Promise<Meal[]> {
         return {
           Id: mealData.Id,
           name: mealData.name,
+          description: mealData.description,
+          mealTypeId: mealData.mealTypeId,
+          servedId: mealData.servedId,
+          served: mealData.served,
         };
       });
     }
@@ -43,6 +47,35 @@ export async function getMealTypeList(hospitalId: number): Promise<MealType[]> {
     console.error(error);
   }
   return result;
+}
+
+// utility function to get the selected meal type id's for a specified cycle id
+export async function getSelectedMealTypes(
+  cycleId: number
+): Promise<number | undefined> {
+  console.log("Getting detail for cycle: " + cycleId);
+  let apiResult = await axios.post(
+    `${process.env.REACT_APP_API}/cycle/selected-mealtypes`,
+    {
+      cycleId,
+    }
+  );
+  console.log("Cycle detail apiResult: ", apiResult);
+  if (apiResult.status !== 200) {
+    console.error(
+      "Problem getting selected-mealtypes details for cycleId: " + cycleId,
+      apiResult
+    );
+    return undefined;
+  }
+
+  const mealItems = apiResult.data?.mealItems || [];
+  const mealTypeIds = mealItems.map(
+    (item: { mealTypeId: number }) => item.mealTypeId
+  );
+
+  console.log("Extracted mealTypeIds: ", mealTypeIds);
+  return mealTypeIds;
 }
 
 // utility function to get a list of cycles for a hospital
@@ -100,7 +133,7 @@ export async function getCycleMealDays(
       mealTypeId
   );
   let apiResult = await axios.post(
-    `${process.env.REACT_APP_API}/cycle/meal-type/meal-days`,
+    `${process.env.REACT_APP_API}/cycle/meal-days`,
     { cycleId, mealTypeId }
   );
   console.log("Cycle MealType items apiResult: ", apiResult);
@@ -161,6 +194,29 @@ export async function mergeCycleInfo(
   }
 }
 
+// utility function to get list of served options 
+export async function getServedList(): Promise<Served[]> {
+  let result: CycleData[] = [];
+  try {
+    let response = await axios.post(
+      `${process.env.REACT_APP_API}/served-options`,
+    );
+    console.log("Served list response: ", response);
+    if (response.status === 200) {
+      result = response.data.map((servedData: any) => {
+        return {
+          Id: servedData.Id,
+          name: servedData.ServedState,
+        };
+      });
+    }
+    console.log(result)
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
+}
+
 // utility function to merge new/existing meal day item (individual checkboxes)
 export async function mergeMealDay(
   cycleId: number,
@@ -182,6 +238,36 @@ export async function mergeMealDay(
       mergeItemInput
     );
     console.log("Cycle item merge apiResult: ", apiResult);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// utility function to merge new/existing meal day item (individual checkboxes)
+export async function mergeMeal(
+  Id: number,
+  name: string,
+  description: string,
+  servedId: number,
+  mealTypeId: number,
+  hospitalId: number,
+  active: boolean
+): Promise<void> {
+  const mergeItemInput = {
+    Id,
+    name,
+    description,
+    servedId,
+    mealTypeId,
+    hospitalId,
+    isActive: active,
+  };
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/meal/merge`,
+      mergeItemInput
+    );
+    console.log("Meal merge apiResult: ", apiResult);
   } catch (error) {
     console.error(error);
   }

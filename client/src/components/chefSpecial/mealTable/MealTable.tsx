@@ -243,8 +243,14 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
       >
         <TableContainer component={Paper} sx={{ marginTop: 2 }}>
           <Table size="small">
-            <caption style={{ padding: "5px"}}>
-              <Button onClick={handleAddRow}>
+            <caption style={{ padding: "5px" }}>
+              <Button
+                onClick={handleAddRow}
+                sx={{
+                  minWidth: "37px",
+                  "&:hover": { backgroundColor: "transparent" },
+                }}
+              >
                 <PlusCircleIcon className="size-5 text-[#FFB600]" />
               </Button>
             </caption>
@@ -270,7 +276,14 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                   <TableCell>
                     <MealDropdown
                       allMeals={allMeals}
-                      selectedMeal={{ Id: row.mealId, name: row.mealName }}
+                      mealTypeId={mealType.Id}
+                      selectedMeal={{
+                        Id: row.mealId,
+                        name: row.mealName,
+                        description: "",
+                        mealTypeId: 0,
+                        servedId: 0,
+                      }}
                       onChange={(newMeal) =>
                         handleMealChange(
                           row,
@@ -304,7 +317,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                       className="mealTable-day"
                     >
                       <CheckboxCustom
-                        icon={<Icon.FiCheck color="#26FF00" size={15} />}
+                        icon={<Icon.FiCheck color="#26ff00" size={15} />}
                         checked={checked}
                         onChange={() => handleCheckboxChange(row, dayIndex)}
                         borderColor="#D9D9D9"
