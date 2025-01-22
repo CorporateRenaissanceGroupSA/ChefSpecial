@@ -45,7 +45,7 @@ meal.post("/list", async (req, res) => {
     });
     return;
   }
-  logger.debug("Meal list query result: ", queryResult);
+  // logger.debug("Meal list query result: ", queryResult);
   res.send({ meals: queryResult.result.recordset });
 });
 
@@ -108,4 +108,36 @@ meal.post("/merge", async (req, res) => {
   res.send({
     Id: id,
   });
+});
+
+meal.post("/cycles", async (req, res) => {
+  logger.api('Received request to "/meal/cycles" api endpoint');
+  let reqData = req.body;
+  logger.api("Req Data: ", reqData);
+  let requiredFieldMissing = checkRequiredFields(reqData, [
+    "hospitalId",
+    "mealId",
+  ]);
+  if (requiredFieldMissing) {
+    res
+      .status(400)
+      .send("Required input field missing: " + requiredFieldMissing);
+    return;
+  }
+  let queryString = `
+    SELECT DISTINCT(C.id), C.name FROM Ems.CSCycleItem as CI
+    LEFT JOIN Ems.CSCycle as C ON C.Id = CI.cycleId
+    WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId}
+  `;
+  let queryResult = await safeQuery(sql, queryString);
+  if (!queryResult.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: queryResult.result,
+      queryString: queryResult.queryString,
+    });
+    return;
+  }
+  logger.debug("Meal list query result: ", queryResult);
+  res.send({ cycles: queryResult.result.recordset });
 });
