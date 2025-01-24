@@ -99,6 +99,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
           mealTypeId: 0,
           servedId: 0,
           served: "",
+          itemIsActive: true,
         });
         existingCycle = await getCycleDetail(existingCycleId as number).then(
           (detail) => detail?.cycleInfo

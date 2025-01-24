@@ -18,6 +18,7 @@ export async function getMealsList(hospitalId: number): Promise<Meal[]> {
           mealTypeId: mealData.mealTypeId,
           servedId: mealData.servedId,
           served: mealData.served,
+          isActive: mealData.isActive,
         };
       });
     }

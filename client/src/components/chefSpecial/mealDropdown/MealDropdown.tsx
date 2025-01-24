@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
-// import { options } from "./MealTable";
-// import { Option } from "../types";
 import { Meal, Option } from "../../../types";
 
 const customStyles = {
@@ -65,6 +63,7 @@ function optionToMeal(option: Option | null): Meal | null {
       description: "",
       mealTypeId: 0,
       servedId: 0,
+      isActive: true
     };
   }
 }
@@ -85,7 +84,7 @@ useEffect(() => {
   // convert meals to options every time allMeals changes
   useEffect(() => {
     const filteredOptions = allMeals
-      .filter((meal) => meal.mealTypeId === mealTypeId) // Filter by mealTypeId
+      .filter((meal) => meal.mealTypeId === mealTypeId && meal.isActive === true) // Filter by mealTypeId & active items
       .map((meal) => mealToOption(meal))
       .filter((option): option is Option => option !== null); // Ensure no null values
 
