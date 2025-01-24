@@ -12,7 +12,6 @@ export const createCSMealTableQueryStr = `
       name varchar(100) not null,
       description varchar(250),
       servedId int REFERENCES dbo.ItemServed,
-      mealTypeId int REFERENCES dbo.MealMenu(Id) not null,
       hospitalId int REFERENCES dbo.Hospital(Id) not null,
       createdAt datetime DEFAULT GETDATE(),
       createdBy int REFERENCES dbo.users(Id),

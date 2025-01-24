@@ -28,15 +28,16 @@ meal.post("/list", async (req, res) => {
   if (reqData.mealTypeId) {
     mealTypeId = reqData.mealTypeId;
   }
-  let queryString = `
-    SELECT M.*, MM.MealDescription as mealType, H.Name as hospitalName, I.ServedState as served, U.name as createdByName FROM Ems.CSMeal as M
+  let mealQueryString = `
+    SELECT M.*, H.Name as hospitalName, I.ServedState as served, U.name as createdByName 
+    FROM Ems.CSMeal as M
     LEFT JOIN dbo.Hospital as H ON M.hospitalId = H.Id
     LEFT JOIN dbo.ItemServed as I ON M.servedId = I.Id
-    LEFT JOIN dbo.MenuMeal as MM ON M.mealTypeId = MM.Id
     LEFT JOIN dbo.Users as U ON M.createdBy = U.Id
-    WHERE M.hospitalId = ${reqData.hospitalId} ${mealTypeId != undefined ? "AND M.mealTypeId = " + mealTypeId : ""}
+    ${mealTypeId != undefined ? "LEFT JOIN Ems.CSMealType as MT ON M.Id = MT.mealId" : ""}
+    WHERE M.hospitalId = ${reqData.hospitalId} ${mealTypeId != undefined ? "AND (MT.mealTypeId = " + mealTypeId + " AND MT.isActive = 'true')" : ""}
   `;
-  let queryResult = await safeQuery(sql, queryString);
+  let queryResult = await safeQuery(sql, mealQueryString);
   if (!queryResult.success) {
     res.status(400).send({
       message: "Problem processing query.",
@@ -45,8 +46,35 @@ meal.post("/list", async (req, res) => {
     });
     return;
   }
-  // logger.debug("Meal list query result: ", queryResult);
-  res.send({ meals: queryResult.result.recordset });
+  let mealDataMap: Map<number, any> = new Map();
+  queryResult.result.recordset.forEach((data: any) => {
+    data.mealTypes = [];
+    mealDataMap.set(data.Id, data);
+  });
+
+  let mealTypeQueryString = `
+  SELECT MT.* from Ems.CSMealType as MT
+  RIGHT JOIN Ems.CSMeal as M ON MT.mealId = M.Id
+  WHERE M.hospitalId = ${reqData.hospitalId} AND MT.isActive = 'true' ${mealTypeId != undefined ? "AND MT.mealTypeId = " + mealTypeId : ""}
+  `;
+  let mealTypeQueryResult = await safeQuery(sql, mealTypeQueryString);
+  if (!mealTypeQueryResult.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: mealTypeQueryResult.result,
+      queryString: mealTypeQueryResult.queryString,
+    });
+    return;
+  }
+  logger.debug("Meal type query result: ", mealTypeQueryResult);
+  mealTypeQueryResult.result.recordset.forEach((data: any) => {
+    let mealData = mealDataMap.get(data.mealId);
+    if (mealData) {
+      mealData.mealTypes.push(data.mealTypeId);
+      mealDataMap.set(data.mealId, mealData);
+    }
+  });
+  res.send({ meals: Array.from(mealDataMap.values()) });
 });
 
 // endpoint to merge an existing/new meal on the DB
@@ -59,7 +87,6 @@ meal.post("/merge", async (req, res) => {
     new FieldInfo("name", "other", true),
     new FieldInfo("description", "other", true),
     new FieldInfo("servedId", "number", true),
-    new FieldInfo("mealTypeId", "number", false),
     new FieldInfo("hospitalId", "number", false),
     new FieldInfo("createdBy", "number", false),
     new FieldInfo("isActive", "other", false),
@@ -89,6 +116,65 @@ meal.post("/merge", async (req, res) => {
 
   const mergeQueryString = createMergeQuery("Ems.CSMeal", reqData, mergeFields);
   logger.debug("Merge Meal query string: ", mergeQueryString);
+  let mergeQuery = await safeQuery(sql, mergeQueryString);
+  if (!mergeQuery.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: mergeQuery.result,
+      queryString: mergeQuery.queryString,
+    });
+    return;
+  }
+  logger.debug("Merge Meal query result: ", mergeQuery);
+  let id;
+  if (reqData.Id == "null" || !reqData.Id) {
+    id = mergeQuery.result.recordset[0].Id;
+  } else {
+    id = reqData.Id;
+  }
+  res.send({
+    Id: id,
+  });
+});
+
+meal.post("/mealtype-merge", async (req, res) => {
+  logger.api('Received request to "/meal/mealtype-merge" api endpoint');
+  let reqData = req.body;
+  logger.api("Req Data: ", reqData);
+  const mergeFields: FieldInfo[] = [
+    new FieldInfo("mealId", "number", true, "", true),
+    new FieldInfo("mealTypeId", "number", true, "", true),
+    new FieldInfo("isActive", "other", false),
+  ];
+  let requiredFieldMissing = checkRequiredFields(
+    reqData,
+    getRequiredFields(mergeFields)
+  );
+  if (requiredFieldMissing) {
+    logger.error("Required input field missing: " + requiredFieldMissing);
+    res
+      .status(400)
+      .send("Required input field missing: " + requiredFieldMissing);
+    return;
+  }
+  let errorField = checkDates(reqData, mergeFields);
+  if (errorField) {
+    res
+      .status(400)
+      .send(
+        errorField.name +
+          " cannot be converted to a valid date." +
+          reqData[errorField.name]
+      );
+    return;
+  }
+
+  const mergeQueryString = createMergeQuery(
+    "Ems.CSMealType",
+    reqData,
+    mergeFields
+  );
+  logger.debug("Merge MealType query string: ", mergeQueryString);
   let mergeQuery = await safeQuery(sql, mergeQueryString);
   if (!mergeQuery.success) {
     res.status(400).send({
