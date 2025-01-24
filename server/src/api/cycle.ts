@@ -25,14 +25,28 @@ cycle.post("/list", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
+  let activeOnlyQuery = "";
+  if (reqData.activeOnly) {
+    let currentDate = new Date(
+      new Date().setHours(0, 0, 0, 0)
+    ).toLocaleDateString();
+    if (reqData.activeOnly == "true" || reqData.activeOnly == true) {
+      activeOnlyQuery = ` AND (
+      C.startDate IS NOT NULL AND C.startDate <= '${currentDate}' AND 
+      (C.endDate IS NULL OR C.endDate >= '${currentDate}')
+      )
+      `;
+    }
+  }
   const queryStr = `
     SELECT C.Id, C.name, C.cycleDays, H.Id as hospitalId, H.name as hospitalName, C.startDate, C.endDate, C.createDate, C.createdBy, U.name as CreatedByName, C.isActive 
     FROM Ems.CSCycle as C
     LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
     LEFT JOIN dbo.users as U ON C.createdBy = U.Id
-    WHERE C.hospitalId = '${reqData.hospitalId}'
+    WHERE C.hospitalId = '${reqData.hospitalId}' ${activeOnlyQuery}
     ;
     `;
+  logger.debug("cycle/list query: ", queryStr);
   let resultQuery = await safeQuery(sql, queryStr);
   if (!resultQuery.success) {
     res.status(400).send({

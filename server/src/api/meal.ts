@@ -124,10 +124,14 @@ meal.post("/cycles", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
+  let onlyActive = false;
+  if (reqData.onlyActive) {
+    onlyActive = reqData.onlyActive;
+  }
   let queryString = `
     SELECT DISTINCT(C.id), C.name FROM Ems.CSCycleItem as CI
     LEFT JOIN Ems.CSCycle as C ON C.Id = CI.cycleId
-    WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId}
+    WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId} ${onlyActive ? "AND C.isActive = 'true'" : ""}
   `;
   let queryResult = await safeQuery(sql, queryString);
   if (!queryResult.success) {
@@ -138,6 +142,6 @@ meal.post("/cycles", async (req, res) => {
     });
     return;
   }
-  logger.debug("Meal list query result: ", queryResult);
+  // logger.debug("Meal cycles query result: ", queryResult);
   res.send({ cycles: queryResult.result.recordset });
 });
