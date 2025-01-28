@@ -14,6 +14,43 @@ export function startApi(port: number = 4001) {
   app.use("/cycle", cycle);
   app.use("/meal", meal);
 
+  // returns the hospitals where the specified user is assigned to catering roles
+  app.post("/user-hospitals", async (req, res) => {
+    logger.api('Received request to "/user-hospitals" api endpoint');
+    let reqData = req.body;
+    logger.api("Req Data: ", reqData);
+    const requiredFields: string[] = ["userId"];
+    let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
+    if (requiredFieldMissing) {
+      res
+        .status(400)
+        .send("Required input field missing: " + requiredFieldMissing);
+      return;
+    }
+
+    const queryStr = `
+    SELECT DISTINCT(H.Id), H.Name as hospitalName 
+    FROM dbo.HospitalPortfolio as HP
+    LEFT JOIN dbo.Hospital as H ON H.Id = HP.Hospital
+    LEFT JOIN dbo.Portfolio as P ON P.Id = HP.Portfolio
+    LEFT JOIN dbo.ServiceGroup as SG ON SG.Id = P.ServiceGroup
+    WHERE SG.Service = 'Catering' AND HP.UserName = ${reqData.userId} and HP.isActive = 'true'
+    ;
+    `;
+
+    let resultQuery = await safeQuery(sql, queryStr);
+    if (!resultQuery.success) {
+      res.status(400).send({
+        message: "Problem processing query.",
+        error: resultQuery.result,
+      });
+      return;
+    }
+    let result = resultQuery.result.recordset;
+    console.log("Result: ", result);
+    res.send(result);
+  });
+
   app.post("/meal-types", async (req, res) => {
     logger.api('Received request to "/meal-types" api endpoint');
     let reqData = req.body;
