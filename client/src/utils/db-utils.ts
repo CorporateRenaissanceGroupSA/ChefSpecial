@@ -1,5 +1,12 @@
 import axios from "axios";
-import { CycleData, Meal, MealDays, MealType, Served } from "../types";
+import {
+  CycleData,
+  CycleMeals,
+  Meal,
+  MealDays,
+  MealType,
+  Served,
+} from "../types";
 
 // utility function to get a list of meals for a hospital
 export async function getMealsList(hospitalId: number): Promise<Meal[]> {
@@ -15,7 +22,7 @@ export async function getMealsList(hospitalId: number): Promise<Meal[]> {
           Id: mealData.Id,
           name: mealData.name,
           description: mealData.description,
-          mealTypeId: mealData.mealTypeId,
+          mealTypes: mealData.mealTypes,
           servedId: mealData.servedId,
           served: mealData.served,
           isActive: mealData.isActive,
@@ -80,11 +87,15 @@ export async function getSelectedMealTypes(
 }
 
 // utility function to get a list of cycles for a hospital
-export async function getCycleList(hospitalId: number): Promise<CycleData[]> {
+export async function getCycleList(
+  hospitalId: number,
+  activeOnly: boolean
+): Promise<CycleData[]> {
   let result: CycleData[] = [];
   try {
     let response = await axios.post(`${process.env.REACT_APP_API}/cycle/list`, {
       hospitalId: hospitalId,
+      activeOnly: activeOnly,
     });
     console.log("Cycle list response: ", response);
     if (response.status === 200) {
@@ -114,6 +125,34 @@ export async function getCycleDetail(
   }
   let result = {
     cycleInfo: apiResult.data.cycleInfo,
+  };
+  console.log("Cycle info result: ", result);
+  return result;
+}
+
+// utility function to get all cycles that are linked to a specified meal
+export async function getCycleMeals(
+  hospitalId: number,
+  mealId: number
+): Promise<{ cycleInfo: CycleMeals[] } | undefined> {
+  console.log("Getting detail for hospital: " + hospitalId + "meal" + mealId);
+  let apiResult = await axios.post(`${process.env.REACT_APP_API}/meal/cycles`, {
+    hospitalId,
+    mealId,
+  });
+  console.log("Cycle Meals detail apiResult: ", apiResult);
+  if (apiResult.status !== 200) {
+    console.error(
+      "Problem getting cycle details for cycleId: " +
+        hospitalId +
+        "meal" +
+        mealId,
+      apiResult
+    );
+    return undefined;
+  }
+  let result = {
+    cycleInfo: apiResult.data.cycles,
   };
   console.log("Cycle info result: ", result);
   return result;
@@ -195,12 +234,12 @@ export async function mergeCycleInfo(
   }
 }
 
-// utility function to get list of served options 
+// utility function to get list of served options
 export async function getServedList(): Promise<Served[]> {
   let result: CycleData[] = [];
   try {
     let response = await axios.post(
-      `${process.env.REACT_APP_API}/served-options`,
+      `${process.env.REACT_APP_API}/served-options`
     );
     console.log("Served list response: ", response);
     if (response.status === 200) {
@@ -211,7 +250,7 @@ export async function getServedList(): Promise<Served[]> {
         };
       });
     }
-    console.log(result)
+    console.log(result);
   } catch (error) {
     console.error(error);
   }
@@ -250,7 +289,6 @@ export async function mergeMeal(
   name: string,
   description: string,
   servedId: number,
-  mealTypeId: number,
   hospitalId: number,
   active: boolean
 ): Promise<void> {
@@ -259,7 +297,6 @@ export async function mergeMeal(
     name,
     description,
     servedId,
-    mealTypeId,
     hospitalId,
     isActive: active,
   };
@@ -269,6 +306,29 @@ export async function mergeMeal(
       mergeItemInput
     );
     console.log("Meal merge apiResult: ", apiResult);
+    return apiResult.data;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// utility function to merge new/existing meal day item (individual checkboxes)
+export async function mergeMealType(
+  mealId: number,
+  mealTypeId: number | number[],
+  isActive: boolean
+): Promise<void> {
+  const mergeItemInput = {
+    mealId,
+    mealTypeId,
+    isActive,
+  };
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/meal/mealtype-merge`,
+      mergeItemInput
+    );
+    console.log("Meal Type merge apiResult: ", apiResult);
   } catch (error) {
     console.error(error);
   }

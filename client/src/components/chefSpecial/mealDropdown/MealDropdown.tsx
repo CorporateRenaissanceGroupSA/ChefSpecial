@@ -62,6 +62,7 @@ function optionToMeal(option: Option | null): Meal | null {
       name: option.label,
       description: "",
       mealTypeId: 0,
+      mealTypes: [],
       servedId: 0,
       isActive: true
     };
@@ -83,10 +84,16 @@ useEffect(() => {
 
   // convert meals to options every time allMeals changes
   useEffect(() => {
+    console.log(allMeals)
     const filteredOptions = allMeals
-      .filter((meal) => meal.mealTypeId === mealTypeId && meal.isActive === true) // Filter by mealTypeId & active items
+      .filter(
+        (meal) =>
+          Array.isArray(meal.mealTypes) &&
+          meal.mealTypes.includes(mealTypeId) && // Check if mealTypeId is in mealTypes array
+          meal.isActive === true // Filter by active items
+      )
       .map((meal) => mealToOption(meal))
-      .filter((option): option is Option => option !== null); // Ensure no null values
+      .filter((option): option is Option => option !== null); 
 
     console.log(
       `Filtered Meal options for mealTypeId ${mealTypeId}:`,

@@ -127,7 +127,7 @@ meal.post("/merge", async (req, res) => {
   }
   logger.debug("Merge Meal query result: ", mergeQuery);
   let id;
-  if (reqData.Id == "null" || !reqData.Id) {
+  if (reqData.Id === null || !reqData.Id) {
     id = mergeQuery.result.recordset[0].Id;
   } else {
     id = reqData.Id;

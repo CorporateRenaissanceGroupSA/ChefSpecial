@@ -9,15 +9,17 @@ import {
   Paper,
   TableCell,
   Typography,
-  Checkbox,
   Button,
   tableCellClasses,
-  checkboxClasses,
   TextField,
   Select,
   MenuItem,
   Switch,
   TablePagination,
+  Modal,
+  Box,
+  Chip,
+  TableFooter,
 } from "@mui/material";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import {
@@ -25,6 +27,8 @@ import {
   getServedList,
   getMealTypeList,
   mergeMeal,
+  getCycleMeals,
+  mergeMealType,
 } from "../../../utils/db-utils";
 import { CycleData, Meal, MealDays, MealType, Served } from "../../../types";
 import _ from "lodash";
@@ -58,7 +62,7 @@ interface RowData {
   mealName: string;
   mealDescription: string;
   mealTypeId: number;
-  mealType: string;
+  mealTypes: string;
   mealServedId: number;
 }
 
@@ -70,15 +74,35 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
   const [editRowId, setEditRowId] = useState<number | null>(null); // Track which row is being edited
   const [tempRowData, setTempRowData] = useState<Partial<Meal> | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [inactiveToggleId, setInactiveToggleId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [connectedCycles, setConnectedCycles] = useState<string[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [changedMealTypes, setChangedMealTypes] = useState<
+    Record<number, number[]>
+  >({});
 
   useEffect(() => {
     const fetchMealsAndServedOptions = async () => {
       try {
         // Fetch the updated meals list
         const updatedMeals = await getMealsList(hospitalId);
+        console.log(updatedMeals);
+
+        // // Normalize `mealTypeId` for each meal
+        // const normalizedMeals = updatedMeals.map((meal) => ({
+        //   ...meal,
+        //   mealTypeId: Array.isArray(meal.mealTypeId)
+        //     ? meal.mealTypeId
+        //     : meal.mealTypeId
+        //     ? [meal.mealTypeId]
+        //     : [], // Ensure mealTypeId is always an array
+        // }));
+
         setAllLocalMeals(updatedMeals);
+
+        // console.log("Meals with normalized mealTypeId:", normalizedMeals);
 
         // Fetch served options
         const servedList = await getServedList();
@@ -96,71 +120,61 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
     fetchMealsAndServedOptions();
   }, [hospitalId]);
 
-  // // Update meal data in backend
-  // const handleUpdateMeal = (updatedMeal: Meal) => {
-  //   const { Id, name, description, servedId, mealTypeId } = updatedMeal;
+  const normalizeMealTypeId = (mealTypes: number | number[]): number[] => {
+    return Array.isArray(mealTypes) ? mealTypes : mealTypes ? [mealTypes] : [];
+  };
 
-  //   const hospitalId = 1;
-  //   const active = true; // default active state
-
-  //   // Call the mergeMeal function
-  //   mergeMeal(Id, name, description, servedId, mealTypeId, hospitalId, active)
-  //     .then(() => {
-  //       console.log("Meal merged successfully:", updatedMeal);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error merging meal:", error);
-  //     });
-  // };
-
-  // // Debounced save function
-  // const saveRecord = useCallback(
-  //   _.debounce((id: number, field: string, value: string | number) => {
-  //     // Replace this with your actual save API call
-  //     console.log("Saving record with value:", value);
-  //     // Find the updated meal
-  //     const updatedMeal = allLocalMeals.find((meal) => meal.Id === id);
-  //     if (updatedMeal) {
-  //       const newMeal = { ...updatedMeal, [field]: value };
-  //       handleUpdateMeal(newMeal);
-  //     }
-  //   }, 500), // Adjust debounce delay as needed (500ms here)
-  //   [allLocalMeals]
-  // );
+  useEffect(() => {
+    const normalizedMeals = allLocalMeals.map((meal) => ({
+      ...meal,
+      mealTypes: normalizeMealTypeId(meal.mealTypes),
+    }));
+    setAllLocalMeals(normalizedMeals);
+  }, [allLocalMeals]);
 
   const handleInputChange = (
     mealId: number,
     field: keyof Meal,
-    value: string | number | boolean
+    value: string | number | boolean | number[]
   ) => {
-    setTempRowData((prev) => {
-      // Initialize if not editing or update existing
-      if (editRowId !== mealId) {
-        const rowToEdit = allLocalMeals.find((meal) => meal.Id === mealId);
-        return rowToEdit ? { ...rowToEdit, [field]: value } : prev;
-      }
+    setEditRowId(mealId);
 
-      // Update the field value
+    setTempRowData((prev) => {
+      // Initialize tempRowData only if not set or for a new mealId
+      if (!prev || prev.Id !== mealId) {
+        const currentMeal =
+          allLocalMeals.find((meal) => meal.Id === mealId) || {};
+        return {
+          ...currentMeal,
+          [field]:
+            field === "mealTypes" && !Array.isArray(value) ? [value] : value, // Ensure mealTypeId is always an array
+        };
+      }
+      // Update only the changed field for the current tempRowData
       return {
         ...prev,
-        [field]: value,
+        [field]:
+          field === "mealTypes" && !Array.isArray(value) ? [value] : value, // Ensure mealTypeId is always an array
       };
     });
-
-    setEditRowId(mealId); // Ensure the correct row is being edited
   };
 
   // function to add a new row to the cycle
   const handleAddRow = () => {
+    // const tempId = `temp-${Date.now()}`; // Generate a temporary ID for the new row
     const newMeal: Meal = {
-      Id: allLocalMeals.length + 1,
+      Id: null,
       name: "",
       servedId: 0,
       description: "",
       mealTypeId: 0,
+      mealTypes: [],
       isActive: true,
     };
+    console.log(newMeal);
     setAllLocalMeals((prevMeals) => [...prevMeals, newMeal]);
+    setEditRowId(newMeal.Id);
+    setTempRowData(newMeal);
   };
 
   // function to toggle item to be active/inactive
@@ -168,44 +182,336 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
     setChecked(event.target.checked);
   };
 
-  // Save changes to the backend
-  const handleSaveRow = (mealId: number) => {
+  const handleSaveRow = async (mealId: number) => {
     if (!tempRowData) return;
 
-    // Find and update the meal in allLocalMeals
-    setAllLocalMeals((prevMeals) =>
-      prevMeals.map((meal) =>
-        meal.Id === mealId ? { ...meal, ...tempRowData } : meal
-      )
-    );
+    console.log("Saving row with tempRowData:", tempRowData);
 
-    const updatedMeal = {
-      ...allLocalMeals.find((meal) => meal.Id === mealId),
-      ...tempRowData,
-    };
+    // Handle new row
+    if (mealId === null || String(mealId).startsWith("temp")) {
+      try {
+        const res: any = await mergeMeal(
+          tempRowData.Id,
+          tempRowData.name,
+          tempRowData.description,
+          tempRowData.servedId,
+          hospitalId,
+          tempRowData.isActive
+        );
 
-    if (updatedMeal.Id !== undefined) {
-      mergeMeal(
-        updatedMeal.Id,
-        updatedMeal.name || "",
-        updatedMeal.description || "",
-        updatedMeal.servedId || 0,
-        updatedMeal.mealTypeId || 0,
-        hospitalId,
-        updatedMeal.isActive || false
-      )
-        .then(() => {
+        if (res && res.Id) {
+          const newMealId = res.Id; // Get the newly created meal ID
+          console.log("New Meal saved successfully:", newMealId);
+
+          // Add the new meal to local state
+          setAllLocalMeals((prevMeals) => [
+            ...prevMeals.map((meal) =>
+              meal.Id === mealId
+                ? { ...meal, ...tempRowData, Id: newMealId } // Replace temp row with new meal
+                : meal
+            ),
+          ]);
+
+          // Save meal types if any
+          if (tempRowData.mealTypes && Array.isArray(tempRowData.mealTypes)) {
+            for (const typeId of tempRowData.mealTypes) {
+              await mergeMealType(newMealId, typeId, true);
+              console.log("Meal type saved for new meal:", typeId);
+            }
+          }
+
+          // Reset editing state
           setEditRowId(null);
           setTempRowData(null);
-          console.log("Meal saved successfully:", updatedMeal);
-        })
-        .catch((error) => {
-          console.error("Error saving meal:", error);
-        });
+        }
+      } catch (error) {
+        console.error("Error saving new meal:", error);
+      }
     } else {
-      console.error("Meal ID is undefined. Cannot merge meal.");
+      // Handle existing row
+      const { mealTypeId, ...dataToUpdate } = tempRowData;
+
+      try {
+        // Save the meal details
+        await mergeMeal(
+          mealId,
+          tempRowData.name || "",
+          tempRowData.description || "",
+          tempRowData.servedId || 0,
+          hospitalId,
+          tempRowData.isActive || false
+        );
+
+        // Save updated meal types if changed
+        if (changedMealTypes[mealId]) {
+          const selectedMealTypes = changedMealTypes[mealId];
+          for (const mealTypeId of selectedMealTypes) {
+            await mergeMealType(mealId, mealTypeId, true);
+            console.log("Meal type updated:", mealTypeId);
+          }
+        }
+
+        // Update local state for the existing meal
+        setAllLocalMeals((prevMeals) =>
+          prevMeals.map((meal) =>
+            meal.Id === mealId
+              ? {
+                  ...meal,
+                  ...dataToUpdate,
+                  mealTypes: changedMealTypes[mealId] || meal.mealTypes,
+                }
+              : meal
+          )
+        );
+
+        // Clear changedMealTypes for the mealId
+        setChangedMealTypes((prev) => {
+          const { [mealId]: _, ...remaining } = prev;
+          return remaining;
+        });
+
+        // Reset editing state
+        setEditRowId(null);
+        setTempRowData(null);
+      } catch (error) {
+        console.error("Error saving meal:", error);
+      }
     }
   };
+
+  // const handleSaveRow = async (mealId: number) => {
+  //   if (!tempRowData) return;
+
+  //   console.log("Temp Row Data: ", tempRowData);
+
+  //   try {
+  //     // If mealId is temporary or undefined, save the new meal record
+  //     if (mealId === null || String(mealId).startsWith("temp")) {
+  //       const res: any = await mergeMeal(
+  //         tempRowData.Id,
+  //         tempRowData.name,
+  //         tempRowData.description,
+  //         tempRowData.servedId,
+  //         hospitalId,
+  //         tempRowData.isActive
+  //       );
+
+  //       if (res && res.Id) {
+  //         const newMealId = res.Id; // Extract the newly created meal ID
+  //         console.log("New Meal saved successfully:", newMealId);
+
+  //         // Update the local state with the new meal
+  //         setAllLocalMeals((prevMeals) => [
+  //           ...prevMeals.filter((meal) => meal.Id !== mealId),
+  //           {
+  //             Id: newMealId,
+  //             name: tempRowData.name || "", // Ensure name is not optional
+  //             description: tempRowData.description || "",
+  //             mealTypeId: tempRowData.mealTypeId || undefined,
+  //             mealTypes: tempRowData.mealTypes || [],
+  //             servedId: tempRowData.servedId || 0,
+  //             isActive: tempRowData.isActive || false,
+  //           } as Meal, // Ensure the object adheres to the Meal type
+  //         ]);
+
+  //         // Save the selected meal types, if any
+  //         if (tempRowData.mealTypes && Array.isArray(tempRowData.mealTypes)) {
+  //           for (const typeId of tempRowData.mealTypes) {
+  //             await mergeMealType(newMealId, typeId, true);
+  //             console.log("Meal type saved for new meal:", typeId);
+  //           }
+  //         }
+
+  //         // Reset editing state
+  //         setEditRowId(null);
+  //         setTempRowData(null);
+  //       } else {
+  //         console.error(
+  //           "Unexpected response from API when creating a new meal: ",
+  //           res
+  //         );
+  //         return;
+  //       }
+  //     } else {
+  //       // Handle updates for existing meals
+  //       const { mealTypeId, ...dataToUpdate } = tempRowData;
+
+  //       // Update local state for meal changes (excluding mealTypeId changes)
+  //       setAllLocalMeals((prevMeals) =>
+  //         prevMeals.map((meal) =>
+  //           meal.Id === mealId ? { ...meal, ...dataToUpdate } : meal
+  //         )
+  //       );
+
+  //       // Save changes to the backend
+  //       await mergeMeal(
+  //         mealId,
+  //         tempRowData.name || "",
+  //         tempRowData.description || "",
+  //         tempRowData.servedId || 0,
+  //         hospitalId,
+  //         tempRowData.isActive || false
+  //       );
+  //       console.log("Meal updated successfully:", tempRowData);
+  //     }
+
+  //     // Handle meal type changes
+  //     if (changedMealTypes[mealId]) {
+  //       const selectedMealTypes = changedMealTypes[mealId];
+  //       await Promise.all(
+  //         selectedMealTypes.map((typeId) => mergeMealType(mealId, typeId, true))
+  //       );
+
+  //       console.log("All meal types saved successfully:", selectedMealTypes);
+
+  //       // Update local state with saved meal types
+  //       setAllLocalMeals((prevMeals) =>
+  //         prevMeals.map((meal) =>
+  //           meal.Id === mealId
+  //             ? { ...meal, mealTypes: selectedMealTypes }
+  //             : meal
+  //         )
+  //       );
+
+  //       // Clear changedMealTypes for this mealId
+  //       setChangedMealTypes((prev) => {
+  //         const { [mealId]: _, ...remaining } = prev;
+  //         return remaining;
+  //       });
+  //     }
+
+  //     // Reset editing state
+  //     setEditRowId(null);
+  //     setTempRowData(null);
+  //   } catch (error) {
+  //     console.error("Error saving meal or meal types:", error);
+  //   }
+  // };
+
+  // const handleSaveRow = async (mealId: number) => {
+  //   if (!tempRowData) return;
+
+  //   console.log("Temp Row Data: ", tempRowData);
+
+  //   try {
+  //   // If mealId is temporary or undefined, save the new meal record
+  //   if (mealId === null || String(mealId).startsWith("temp")) {
+  //     const res: any = await mergeMeal(
+  //       tempRowData.Id || null,
+  //       tempRowData.name || "",
+  //       tempRowData.description || "",
+  //       tempRowData.servedId || 0,
+  //       hospitalId,
+  //       tempRowData.isActive || false
+  //     );
+  //     if (res && res.Id) {
+  //       const newMealId = res.Id; // Extract the newly created meal ID
+  //       console.log("New Meal saved successfully:", newMealId);
+
+  //       // Update the local state with the new meal ID
+  //       setAllLocalMeals((prevMeals) => [
+  //         ...prevMeals.filter((meal) => meal.Id !== mealId),
+  //         { ...tempRowData, Id: newMealId },
+  //       ]);
+
+  //       // Update the mealId reference for further processing
+  //       mealId = newMealId;
+
+  //       // Save the selected meal types if any
+  //       if (tempRowData.mealTypes && Array.isArray(tempRowData.mealTypes)) {
+  //         await Promise.all(
+  //           tempRowData.mealTypes.map((typeId) =>
+  //             mergeMealType(mealId, typeId, true)
+  //           )
+  //         );
+  //         console.log(
+  //           "Meal types saved successfully for new meal:",
+  //           tempRowData.mealTypes
+  //         );
+  //       }
+  //     } else {
+  //       console.error(
+  //         "Unexpected response from API when creating a new meal: ",
+  //         res
+  //       );
+  //       return;
+  //     }
+  //   }
+
+  //   if (changedMealTypes[mealId]) {
+  //     const selectedMealTypes = changedMealTypes[mealId];
+  //     const savePromises = selectedMealTypes.map(async (mealTypeId) => {
+  //       try {
+  //         if (mealTypeId) {
+  //           await mergeMealType(mealId, mealTypeId, true);
+  //           console.log(
+  //             `Saved meal type: Meal ID ${mealId}, Meal Type ID ${mealTypeId}`
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error(
+  //           `Error saving Meal Type for Meal ID: ${mealId}, Meal Type ID: ${mealTypeId}`,
+  //           error
+  //         );
+  //       }
+  //     });
+
+  //     // Wait for all saves to complete
+  //     Promise.all(savePromises)
+  //       .then(() => {
+  //         console.log(selectedMealTypes);
+  //         setAllLocalMeals((prevMeals) =>
+  //           prevMeals.map((meal) =>
+  //             meal.Id === mealId
+  //               ? { ...meal, mealTypes: selectedMealTypes }
+  //               : meal
+  //           )
+  //         );
+  //         console.log(
+  //           "All meal types saved successfully and local state updated."
+  //         );
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error saving meal types:", error);
+  //       });
+
+  //     // Clear changedMealTypes for the mealId
+  //     setChangedMealTypes((prev) => {
+  //       const { [mealId]: _, ...remaining } = prev;
+  //       return remaining;
+  //     });
+  //   }
+  //   // } else {
+  //   // Exclude the `mealTypeId` field from being updated
+  //   const { mealTypeId, ...dataToUpdate } = tempRowData;
+
+  //   // Update the local state with the new data (excluding mealTypeId changes)
+  //   setAllLocalMeals((prevMeals) =>
+  //     prevMeals.map((meal) =>
+  //       meal.Id === mealId ? { ...meal, ...dataToUpdate } : meal
+  //     )
+  //   );
+
+  //   // Optionally, save to the backend
+  //   mergeMeal(
+  //     mealId,
+  //     tempRowData.name || "",
+  //     tempRowData.description || "",
+  //     tempRowData.servedId || 0,
+  //     hospitalId,
+  //     tempRowData.isActive || false
+  //   )
+  //     .then(() => {
+  //       console.log("Meal saved successfully:", tempRowData);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error saving meal:", error);
+  //     });
+
+  //   // Reset the editing state
+  //   setEditRowId(null);
+  //   setTempRowData(null);
+  // };
 
   // Toggle the visibility of inactive rows
   const toggleShowInactive = () => setShowInactive((prev) => !prev);
@@ -214,6 +520,49 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
   const filteredMeals = allLocalMeals.filter(
     (meal) => showInactive || meal.isActive
   );
+
+  // Handle toggling isActive status
+  const handleToggleIsActive = async (mealId: number) => {
+    const result = await getCycleMeals(hospitalId, mealId);
+    if (result && result.cycleInfo.length > 0) {
+      // If the meal is associated with cycles, show the modal
+      setConnectedCycles(result.cycleInfo.map((cycle) => cycle.name));
+      setInactiveToggleId(mealId);
+      setModalOpen(true);
+    } else {
+      setTempRowData((prev) => {
+        if (!prev) {
+          // Initialize tempRowData if not editing or update existing row
+          const rowToEdit = allLocalMeals.find((meal) => meal.Id === mealId);
+          return rowToEdit
+            ? { ...rowToEdit, isActive: !rowToEdit.isActive }
+            : { Id: mealId, isActive: true }; // Provide a default object as fallback
+        }
+
+        // Update the specific field in the tempRowData
+        return {
+          ...prev,
+          isActive: !prev.isActive,
+        };
+      });
+
+      setEditRowId(mealId);
+    }
+  };
+
+  const toggleMealStatus = (mealId: number) => {
+    setAllLocalMeals((prevMeals) =>
+      prevMeals.map((meal) =>
+        meal.Id === mealId ? { ...meal, isActive: !meal.isActive } : meal
+      )
+    );
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setConnectedCycles([]);
+    setInactiveToggleId(null);
+  };
 
   // Handle pagination
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -233,6 +582,17 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
     page * rowsPerPage + rowsPerPage
   );
 
+  const handleMultiselectChange = (
+    mealId: number,
+    selectedOptions: number[]
+  ) => {
+    handleInputChange(mealId, "mealTypes", selectedOptions);
+    setChangedMealTypes((prev) => ({
+      ...prev,
+      [mealId]: selectedOptions,
+    }));
+  };
+
   return (
     <div className="px-3">
       <Paper
@@ -245,20 +605,9 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
       >
         <TableContainer
           component={Paper}
-          sx={{ marginTop: 2, maxHeight: "81vh" }}
+          sx={{ marginTop: 2, maxHeight: "78vh" }}
         >
           <Table size="small" stickyHeader>
-            <caption style={{ padding: "5px" }}>
-              <Button
-                onClick={handleAddRow}
-                sx={{
-                  minWidth: "37px",
-                  "&:hover": { backgroundColor: "transparent" },
-                }}
-              >
-                <PlusCircleIcon className="size-5 text-[#FFB600]" />
-              </Button>
-            </caption>
             <TableHead>
               <TableRow>
                 <StyledTableCell width="25%" sx={{ fontFamily: "Poppins" }}>
@@ -267,7 +616,7 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
                 <StyledTableCell width="10%" sx={{ fontFamily: "Poppins" }}>
                   Served
                 </StyledTableCell>
-                <StyledTableCell width="30%" sx={{ fontFamily: "Poppins" }}>
+                <StyledTableCell width="20%" sx={{ fontFamily: "Poppins" }}>
                   Description
                 </StyledTableCell>
                 <StyledTableCell width="20%" sx={{ fontFamily: "Poppins" }}>
@@ -370,21 +719,35 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
                   </StyledTableCell>
                   <StyledTableCell>
                     <Select
+                      multiple
                       name="mealType"
+                      size="small"
+                      fullWidth
                       value={
                         editRowId === meal.Id
-                          ? tempRowData?.mealTypeId || meal.mealTypeId
-                          : meal.mealTypeId
+                          ? tempRowData?.mealTypes || [] // Ensure value is always an array
+                          : normalizeMealTypeId(meal.mealTypes)
                       }
-                      onChange={(e) =>
-                        handleInputChange(
-                          meal.Id,
-                          "mealTypeId",
-                          e.target.value as number
-                        )
+                      onChange={(e) => {
+                        const value = e.target.value as number[];
+                        handleMultiselectChange(meal.Id, value);
+                      }}
+                      renderValue={(selected) =>
+                        Array.isArray(selected) ? (
+                          <div>
+                            {selected.map((id) => (
+                              <Chip
+                                key={id}
+                                label={
+                                  mealTypes.find((type) => type.Id === id)
+                                    ?.name || id
+                                }
+                              />
+                            ))}
+                          </div>
+                        ) : null
                       }
-                      fullWidth
-                      size="small"
+                      style={{ width: 430 }}
                     >
                       {mealTypes.map((option) => (
                         <MenuItem key={option.Id} value={option.Id}>
@@ -401,9 +764,7 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
                           ? tempRowData?.isActive ?? meal.isActive
                           : meal.isActive
                       }
-                      onChange={(e) =>
-                        handleInputChange(meal.Id, "isActive", e.target.checked)
-                      }
+                      onChange={() => handleToggleIsActive(meal.Id)}
                       sx={{
                         "& .MuiSwitch-switchBase.Mui-checked": {
                           color: "#33cd33",
@@ -438,6 +799,19 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
             </TableBody>
           </Table>
         </TableContainer>
+        <Box>
+          <caption style={{ paddingTop: "3px" }}>
+            <Button
+              onClick={handleAddRow}
+              sx={{
+                minWidth: "37px",
+                "&:hover": { backgroundColor: "transparent" },
+              }}
+            >
+              <PlusCircleIcon className="size-5 text-[#FFB600]" />
+            </Button>
+          </caption>
+        </Box>
         <TablePagination
           rowsPerPageOptions={[20, 50, 100]}
           component="div"
@@ -446,7 +820,52 @@ const MealItems: React.FC<MealItemsProps> = ({ allMeals, mealTypes }) => {
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{
+            "& .MuiTablePagination-toolbar": {
+              minHeight: "40px",
+            },
+          }}
         />
+        <Modal
+          open={modalOpen}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              p: 4,
+              width: 400,
+            }}
+          >
+            <Typography variant="h6">Connected Cycles</Typography>
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              This meal is linked to the following cycles:
+            </Typography>
+            <ul>
+              {connectedCycles.map((cycle, index) => (
+                <li key={index}>{cycle}</li>
+              ))}
+            </ul>
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              Please go to the Chef Special window to remove this item from the
+              cycles before marking it inactive.
+            </Typography>
+            <Button
+              onClick={handleCloseModal}
+              variant="contained"
+              sx={{ mt: 2 }}
+            >
+              Close
+            </Button>
+          </Box>
+        </Modal>
       </Paper>
     </div>
   );
