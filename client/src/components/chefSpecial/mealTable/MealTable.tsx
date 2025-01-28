@@ -282,6 +282,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                         name: row.mealName,
                         description: "",
                         mealTypeId: 0,
+                        mealTypes: [],
                         servedId: 0,
                         isActive: true
                       }}

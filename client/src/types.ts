@@ -1,8 +1,9 @@
 export interface Meal {
-  Id: number;
+  Id: number | null;
   name: string;
   description: string;
   mealTypeId: number;
+  mealTypes: number | number[];
   servedId: number;
   isActive: boolean;
 }
@@ -43,9 +44,15 @@ export interface CycleData {
   isActive: boolean;
   description: string;
   mealTypeId: number;
+  mealTypes: number | number[];
   servedId: number;
   served: string;
   itemIsActive: boolean;
+}
+
+export interface CycleMeals {
+  Id: number;
+  name: string;
 }
 
 export interface Option {

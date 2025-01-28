@@ -15,7 +15,10 @@ interface ChefSpecialConfigProps {
   mealTypes: MealType[];
 }
 
-const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealTypes}) => {
+const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
+  allMeals,
+  mealTypes,
+}) => {
   const [hospitalId, setHospitalId] = useState<number>(1);
   const [allCycles, setAllCycles] = useState<CycleData[]>([]);
   const [currentCycle, setCurrentCycle] = useState<CycleData | undefined>(
@@ -24,6 +27,8 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
   const [selectedMealTypes, setSelectedMealTypes] = useState<number[]>([
     1, 2, 3,
   ]);
+
+  const [activeOnly, setActiveOnly] = useState(true); // Add state for the switch
 
   // // Loads all the Cycles and Meals available for a hospital every time the hospitalId changes
   // useEffect(() => {
@@ -36,7 +41,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
   // Load cycles and restore the selected cycle on component mount
   useEffect(() => {
     const fetchCycles = async () => {
-      const result = await getCycleList(hospitalId);
+      const result = await getCycleList(hospitalId, activeOnly);
       setAllCycles(result);
 
       // Restore the persisted cycle from local storage
@@ -63,7 +68,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
     };
 
     fetchCycles();
-  }, [hospitalId]);
+  }, [hospitalId, activeOnly]);
 
   // function to deal with the event when a different cycle is selected by the user
   const handleCycleChange = async (option: SelectOption | null) => {
@@ -77,104 +82,103 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
       return;
     }
 
-      let existingCycle = allCycles.find(
-        (cycle) => cycle.Id.toString() === option.value
+    let existingCycle = allCycles.find(
+      (cycle) => cycle.Id.toString() === option.value
+    );
+    console.log(existingCycle);
+    let existingCycleId: number | undefined;
+
+    if (!existingCycle) {
+      console.warn("Creating new cycle: ", option);
+      const existingCycleId = await mergeCycleInfo({
+        Id: 0,
+        hospitalId: hospitalId,
+        name: option.label,
+        cycleDays: 3,
+        startDate: new Date().toJSON(),
+        endDate: "null",
+        createdAt: "",
+        createdBy: 0,
+        isActive: true,
+        description: "",
+        mealTypeId: 0,
+        mealTypes: [],
+        servedId: 0,
+        served: "",
+        itemIsActive: true,
+      });
+      existingCycle = await getCycleDetail(existingCycleId as number).then(
+        (detail) => detail?.cycleInfo
       );
-      console.log(existingCycle)
-      let existingCycleId: number | undefined;
-
-      if (!existingCycle) {
-        console.warn("Creating new cycle: ", option);
-        const existingCycleId = await mergeCycleInfo({
-          Id: 0,
-          hospitalId: hospitalId,
-          name: option.label,
-          cycleDays: 3,
-          startDate: new Date().toJSON(),
-          endDate: "null",
-          createdAt: "",
-          createdBy: 0,
-          isActive: true,
-          description: "",
-          mealTypeId: 0,
-          servedId: 0,
-          served: "",
-          itemIsActive: true,
-        });
-        existingCycle = await getCycleDetail(existingCycleId as number).then(
-          (detail) => detail?.cycleInfo
-        );
-        if (existingCycle) {
-          setAllCycles((prev) => [...prev, existingCycle!]);
-        }
-      } else {
-        existingCycleId = existingCycle.Id;
-      }
-
       if (existingCycle) {
-        setCurrentCycle(existingCycle);
-        console.log("set LocalStorage existing")
-        localStorage.setItem("selectedCycle", JSON.stringify(existingCycle)); // Persist selected cycle
-
-        const selectedMealTypeIds = await getSelectedMealTypes(
-          existingCycle.Id
-        );
-        setSelectedMealTypes(
-          Array.isArray(selectedMealTypeIds) && selectedMealTypeIds.length
-            ? [...new Set([1, 2, 3, ...selectedMealTypeIds])]
-            : [1, 2, 3]
-        );
-
-        // Fetch selected meal types for the cycle
-        try {
-          const selectedMealTypeIds = await getSelectedMealTypes(
-            existingCycleId as number
-          );
-          console.log("Selected Meal Types Retrieved:", selectedMealTypeIds);
-
-          if (
-            Array.isArray(selectedMealTypeIds) &&
-            selectedMealTypeIds.length > 0
-          ) {
-            // Merge default meal types with selected ones
-            const defaultMealTypes = [1, 2, 3];
-            const updatedMealTypes = Array.from(
-              new Set([...defaultMealTypes, ...selectedMealTypeIds])
-            );
-            setSelectedMealTypes(updatedMealTypes);
-            console.log("Updated Meal Types:", updatedMealTypes);
-          } else {
-            console.warn(
-              "No specific meal types found for this cycle, defaulting."
-            );
-            setSelectedMealTypes([1, 2, 3]);
-          }
-        } catch (error) {
-          console.error("Error retrieving selected meal types:", error);
-          setSelectedMealTypes([1, 2, 3]); // Fallback to defaults in case of error
-        }
-        // // Retrieve and update selected meal types
-        // const selectedMealTypeIds = await getSelectedMealTypes(
-        //   existingCycleId as number
-        // );
-        // console.log("Selected Meal Types:", selectedMealTypeIds);
-
-        // if (
-        //   Array.isArray(selectedMealTypeIds) &&
-        //   selectedMealTypeIds.length > 0
-        // ) {
-        //   // Merge default meal types with selected ones
-        //   const defaultMealTypes = [1, 2, 3];
-        //   const updatedMealTypes = Array.from(
-        //     new Set([...defaultMealTypes, ...selectedMealTypeIds])
-        //   );
-        //   setSelectedMealTypes(updatedMealTypes);
-        // } else {
-        //   setSelectedMealTypes([1, 2, 3]);
-        // }
-      } else {
-        console.error("Unable to find or create cycle");
+        setAllCycles((prev) => [...prev, existingCycle!]);
       }
+    } else {
+      existingCycleId = existingCycle.Id;
+    }
+
+    if (existingCycle) {
+      setCurrentCycle(existingCycle);
+      console.log("set LocalStorage existing");
+      localStorage.setItem("selectedCycle", JSON.stringify(existingCycle)); // Persist selected cycle
+
+      const selectedMealTypeIds = await getSelectedMealTypes(existingCycle.Id);
+      setSelectedMealTypes(
+        Array.isArray(selectedMealTypeIds) && selectedMealTypeIds
+          ? [...new Set([1, 2, 3, ...selectedMealTypeIds])]
+          : [1, 2, 3]
+      );
+
+      // Fetch selected meal types for the cycle
+      try {
+        const selectedMealTypeIds = await getSelectedMealTypes(
+          existingCycleId as number
+        );
+        console.log("Selected Meal Types Retrieved:", selectedMealTypeIds);
+
+        if (
+          Array.isArray(selectedMealTypeIds) &&
+          selectedMealTypeIds.length > 0
+        ) {
+          // Merge default meal types with selected ones
+          const defaultMealTypes = [1, 2, 3];
+          const updatedMealTypes = Array.from(
+            new Set([...defaultMealTypes, ...selectedMealTypeIds])
+          );
+          setSelectedMealTypes(updatedMealTypes);
+          console.log("Updated Meal Types:", updatedMealTypes);
+        } else {
+          console.warn(
+            "No specific meal types found for this cycle, defaulting."
+          );
+          setSelectedMealTypes([1, 2, 3]);
+        }
+      } catch (error) {
+        console.error("Error retrieving selected meal types:", error);
+        setSelectedMealTypes([1, 2, 3]); // Fallback to defaults in case of error
+      }
+      // // Retrieve and update selected meal types
+      // const selectedMealTypeIds = await getSelectedMealTypes(
+      //   existingCycleId as number
+      // );
+      // console.log("Selected Meal Types:", selectedMealTypeIds);
+
+      // if (
+      //   Array.isArray(selectedMealTypeIds) &&
+      //   selectedMealTypeIds.length > 0
+      // ) {
+      //   // Merge default meal types with selected ones
+      //   const defaultMealTypes = [1, 2, 3];
+      //   const updatedMealTypes = Array.from(
+      //     new Set([...defaultMealTypes, ...selectedMealTypeIds])
+      //   );
+      //   setSelectedMealTypes(updatedMealTypes);
+      // } else {
+      //   setSelectedMealTypes([1, 2, 3]);
+      // }
+    } else {
+      console.error("Unable to find or create cycle");
+    }
 
     // // deal with case where a cycle is selected
     // let addNewCycle = false;
@@ -240,8 +244,6 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
     //   setCurrentCycle(existingCycle);
     //   localStorage.setItem("selectedCycle", JSON.stringify(existingCycle)); // Persist selected cycle
     // }
-
-    
   };
 
   // function to deal with event where cycle data changes
@@ -261,13 +263,13 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
   //     setCurrentCycle(newCycleData);
   //   }
   // };
-    const handleCycleDataChange = async (field: string, value: any) => {
-      console.log("Handling cycle data change", field, value);
-      const newCycleData:any = { ...currentCycle, [field]: value };
-      setCurrentCycle(newCycleData as CycleData);
-      await mergeCycleInfo(newCycleData);
-      localStorage.setItem("selectedCycle", JSON.stringify(newCycleData)); // Update persisted cycle
-    };
+  const handleCycleDataChange = async (field: string, value: any) => {
+    console.log("Handling cycle data change", field, value);
+    const newCycleData: any = { ...currentCycle, [field]: value };
+    setCurrentCycle(newCycleData as CycleData);
+    await mergeCycleInfo(newCycleData);
+    localStorage.setItem("selectedCycle", JSON.stringify(newCycleData)); // Update persisted cycle
+  };
 
   return (
     <div className="min-h-screen p-2 bg-white">
@@ -281,6 +283,8 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({allMeals, mealType
         mealTypes={mealTypes}
         selectedMealTypes={selectedMealTypes}
         setSelectedMealTypes={setSelectedMealTypes}
+        activeOnly={activeOnly}
+        setActiveOnly={setActiveOnly} // Pass setter to update activeOnly
       />
       {currentCycle && selectedMealTypes.length > 0 && (
         <div>

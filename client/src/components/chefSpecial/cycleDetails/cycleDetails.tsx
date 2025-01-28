@@ -10,7 +10,9 @@ import dayjs, { Dayjs } from "dayjs";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CycleName, { SelectOption } from "../cycleName/cycleName";
 import CycleMealType from "../cycleMealType/cycleMealType";
-// import axios from "axios";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import { getCycleList } from "../../../utils/db-utils";
 
 const dateFieldTheme = (theme: any) =>
   createTheme({
@@ -133,6 +135,8 @@ interface CycleSelectorProps {
   mealTypes: MealType[];
   setSelectedMealTypes: any;
   selectedMealTypes: any;
+  activeOnly: boolean;
+  setActiveOnly: any;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -162,10 +166,14 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   mealTypes,
   setSelectedMealTypes,
   selectedMealTypes,
+  activeOnly,
+  setActiveOnly, // Pass setter to update activeOnly
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
+  // const [showInactive, setShowInactive] = useState(false); // State for the switch
+  const [hospitalId, setHospitalId] = useState<number>(1);
 
   const [startDate, setStartDate] = useState<Dayjs | null>(
     currentCycle?.startDate ? dayjs(currentCycle.startDate) : null
@@ -174,11 +182,9 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     currentCycle?.endDate ? dayjs(currentCycle.endDate) : null
   );
 
-  // const [selectedMealTypes, setLocalSelectedMealTypes] = useState<number[]>([
-  //   1, 2, 3,
-  // ]);
-
   const [cleared, setCleared] = React.useState(false);
+
+  const [showInactive, setShowInactive] = useState(false); // State for the switch
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -214,20 +220,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     appCycleDataChange(field, value);
   };
 
-  // useEffect(() => {
-  //   setSelectedMealTypes(selectedMealTypes); // Update parent when local state changes
-  // }, [selectedMealTypes, setSelectedMealTypes]);
-
-  // useEffect(() => {
-  //   if (currentCycle && currentCycle.mealTypeIds) {
-  //     // Set meal types for an existing cycle
-  //     setLocalSelectedMealTypes(currentCycle.mealTypeIds);
-  //   } else {
-  //     // Default meal types for a new cycle
-  //     setLocalSelectedMealTypes([1, 2, 3]); // IDs for Lunch, Break, Dinner
-  //   }
-  // }, [currentCycle]);
-
   // End date datepicker clearing value
   useEffect(() => {
     if (cleared) {
@@ -242,8 +234,32 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
 
   return (
     <div>
-      <div className="grid grid-cols-12 space-x-3 p-3">
-        <div className="col-span-3">
+      <div className="grid grid-cols-12 space-x-3 p-1">
+        <div className="col-span-1 flex">
+          <FormControlLabel
+            label={`${showInactive ? "Hide" : "Show"} Inactive Cycles`}
+            control={
+              <Switch
+                checked={!activeOnly} // Inverse because `activeOnly` implies hiding inactive
+                onChange={(e) => setActiveOnly(!e.target.checked)} // Update state on toggle
+              />
+            }
+            labelPlacement="bottom"
+            sx={{
+              "& .MuiSwitch-switchBase.Mui-checked": {
+                color: "#33cd33",
+              },
+              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                backgroundColor: "#33cd33",
+              },
+              "& .MuiFormControlLabel-label": {
+                fontFamily: "Poppins",
+                fontSize: "8px",
+              },
+            }}
+          />
+        </div>
+        <div className="col-span-3 ">
           <CycleName
             options={allCycleOptions}
             value={currentCycleOption}
@@ -254,7 +270,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-2">
           <ThemeProvider theme={inputFieldTheme}>
             <CycleMealType
               options={mealTypes}
@@ -285,7 +301,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-2 flex justify-end">
+        <div className="col-span-2">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker", "DatePicker"]}>
