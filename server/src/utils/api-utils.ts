@@ -17,6 +17,7 @@ export class FieldInfo {
 export function formattedDate(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
+
 export function checkDates(obj: any, fields: FieldInfo[]) {
   let errorField = fields.find((field) => {
     let result = false;
@@ -65,7 +66,7 @@ function correctFormat(
 }
 
 export function cleanDate(dateStr: string): Date {
-  console.log("dateStr: ", dateStr);
+  logger.debug("dateStr: ", dateStr);
   let originalDateStr = dateStr;
   if (!dateStr) {
     return new Date("");
@@ -87,7 +88,7 @@ export function cleanDate(dateStr: string): Date {
   //   console.log("Original dateStr: " + originalDateStr);
   //   console.log("DateStr after changes: " + dateStr);
   // }
-  console.log("Cleaned dateStr: " + dateStr);
+  logger.debug("Cleaned dateStr: " + dateStr);
   let newDate = new Date(dateStr);
   if (newDate.toString() == "Invalid Date") {
     console.error(
