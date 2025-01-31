@@ -191,7 +191,7 @@ export function startApi(port: number = 4001) {
         let itemCycleStartDate = new Date(dataItem.cycleStartDate);
         let itemCycleEndDate = new Date(dataItem.cycleEndDate);
         if (
-          itemCycleStartDate <= calendarDate ||
+          itemCycleStartDate <= calendarDate &&
           itemCycleEndDate >= calendarDate
         ) {
           let daysSinceCycleStart = daysDiff(calendarDate, itemCycleStartDate);
@@ -209,6 +209,7 @@ export function startApi(port: number = 4001) {
       result[formattedDate(calendarDate)] = dateResult;
     }
     // console.log("Result: ", result);
+
     res.send(result);
   });
 
