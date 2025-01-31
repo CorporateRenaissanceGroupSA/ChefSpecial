@@ -59,3 +59,8 @@ export interface Option {
   value: number;
   label: string;
 }
+
+export interface Hospitals {
+  Id: number;
+  name: string;
+}

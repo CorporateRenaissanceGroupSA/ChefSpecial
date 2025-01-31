@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { CycleData, MealType } from "../../../types";
 import { ViewColumnsIcon } from "@heroicons/react/24/outline";
-import TextField from "@mui/material/TextField";
+// import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CycleName, { SelectOption } from "../cycleName/cycleName";
-import CycleMealType from "../cycleMealType/cycleMealType";
+import CycleName, { SelectOption } from "./CycleName/CycleName";
+import CycleMealType from "./CycleMealType/CycleMealType";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
+// import Switch from "@mui/material/Switch";
 import { getCycleList } from "../../../utils/db-utils";
+import { Button, TextField, Switch } from "@mui/material";
 
 const dateFieldTheme = (theme: any) =>
   createTheme({
@@ -98,6 +99,13 @@ const dateFieldTheme = (theme: any) =>
           },
         },
       },
+      MuiSelect: {
+        styleOverrides: {
+          nativeInput: {
+            fontFamily: "Poppins !important",
+          },
+        },
+      },
     },
   });
 
@@ -127,7 +135,7 @@ const inputFieldTheme = (theme: any) =>
     },
   });
 
-interface CycleSelectorProps {
+interface CycleDetailsProps {
   allCycles: CycleData[];
   currentCycle: CycleData | undefined;
   appCycleSelect: (option: SelectOption | null) => void;
@@ -136,7 +144,9 @@ interface CycleSelectorProps {
   setSelectedMealTypes: any;
   selectedMealTypes: any;
   activeOnly: boolean;
-  setActiveOnly: any;
+  setActiveOnly: (value: boolean) => void;
+  hospitalId: number;
+  toggleWeeklyView: () => void;
 }
 
 function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
@@ -158,7 +168,7 @@ function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
   }
 }
 
-const CycleSelector: React.FC<CycleSelectorProps> = ({
+const CycleDetails: React.FC<CycleDetailsProps> = ({
   allCycles,
   currentCycle,
   appCycleSelect,
@@ -168,12 +178,12 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   selectedMealTypes,
   activeOnly,
   setActiveOnly, // Pass setter to update activeOnly
+  hospitalId,
+  toggleWeeklyView,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
-  // const [showInactive, setShowInactive] = useState(false); // State for the switch
-  const [hospitalId, setHospitalId] = useState<number>(1);
 
   const [startDate, setStartDate] = useState<Dayjs | null>(
     currentCycle?.startDate ? dayjs(currentCycle.startDate) : null
@@ -183,8 +193,6 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   );
 
   const [cleared, setCleared] = React.useState(false);
-
-  const [showInactive, setShowInactive] = useState(false); // State for the switch
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -232,16 +240,30 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
     return () => {};
   }, [cleared]);
 
+  useEffect(() => {
+    // Load activeOnly state from localStorage on mount
+    const storedActiveOnly = localStorage.getItem("activeOnly");
+    if (storedActiveOnly !== null) {
+      setActiveOnly(storedActiveOnly === "true");
+    }
+  }, []);
+
+  const handleToggle = (checked: boolean) => {
+    const newActiveOnly = !checked;
+    setActiveOnly(newActiveOnly);
+    localStorage.setItem("activeOnly", String(newActiveOnly)); // Persist state
+  };
+
   return (
     <div>
       <div className="grid grid-cols-12 space-x-3 p-1">
         <div className="col-span-1 flex">
           <FormControlLabel
-            label={`${showInactive ? "Hide" : "Show"} Inactive Cycles`}
+            label={`${activeOnly ? "Show" : "Hide"} Inactive Cycles`}
             control={
               <Switch
                 checked={!activeOnly} // Inverse because `activeOnly` implies hiding inactive
-                onChange={(e) => setActiveOnly(!e.target.checked)} // Update state on toggle
+                onChange={(e) => handleToggle(e.target.checked)} // Update state on toggle
               />
             }
             labelPlacement="bottom"
@@ -267,6 +289,7 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
               handleCycleInputChange(newOption);
             }}
             placeholder="Cycle Name"
+            hospitalId={hospitalId}
           />
         </div>
 
@@ -369,10 +392,19 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
         </div>
 
         <div className="flex justify-center items-center">
-          <ViewColumnsIcon
-            className="size-12 text-[#FFB600]"
-            strokeWidth={0.7}
-          />
+          <Button
+            onClick={toggleWeeklyView}
+            sx={{
+              minWidth: "24px",
+              padding: 0,
+              "&:hover": { backgroundColor: "transparent" },
+            }}
+          >
+            <ViewColumnsIcon
+              className="size-12 text-[#FFB600]"
+              strokeWidth={0.7}
+            />
+          </Button>
         </div>
       </div>
       {/* {cycleData.meals.length > 0 && ( */}
@@ -382,4 +414,4 @@ const CycleSelector: React.FC<CycleSelectorProps> = ({
   );
 };
 
-export default CycleSelector;
+export default CycleDetails;

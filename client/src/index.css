@@ -5,25 +5,25 @@
 @font-face {
   font-family: "Regular";
   src: local("Poppins-Regular"),
-    url("./fonts/Poppins-Regular.ttf") format("truetype");
+    url("./Fonts/Poppins-Regular.ttf") format("truetype");
 }
 
 @font-face {
   font-family: "Medium";
   src: local("Poppins-Medium"),
-    url("./fonts/Poppins-Medium.ttf") format("truetype");
+    url("./Fonts/Poppins-Medium.ttf") format("truetype");
 }
 
 @font-face {
   font-family: "SemiBold";
   src: local("Poppins-SemiBold"),
-    url("./fonts/Poppins-SemiBold.ttf") format("truetype");
+    url("./Fonts/Poppins-SemiBold.ttf") format("truetype");
 }
 
 @font-face {
   font-family: "Light";
   src: local("Poppins-Light"),
-    url("./fonts/Poppins-Light.ttf") format("truetype");
+    url("./Fonts/Poppins-Light.ttf") format("truetype");
 }
 
 body {

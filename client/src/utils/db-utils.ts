@@ -6,6 +6,7 @@ import {
   MealDays,
   MealType,
   Served,
+  Hospitals
 } from "../types";
 
 // utility function to get a list of meals for a hospital
@@ -133,7 +134,7 @@ export async function getCycleDetail(
 // utility function to get all cycles that are linked to a specified meal
 export async function getCycleMeals(
   hospitalId: number,
-  mealId: number
+  mealId: number,
 ): Promise<{ cycleInfo: CycleMeals[] } | undefined> {
   console.log("Getting detail for hospital: " + hospitalId + "meal" + mealId);
   let apiResult = await axios.post(`${process.env.REACT_APP_API}/meal/cycles`, {
@@ -332,4 +333,29 @@ export async function mergeMealType(
   } catch (error) {
     console.error(error);
   }
+}
+
+// utility function to get list of meal types
+export async function getHospitals(userId: number): Promise<Hospitals[]> {
+  let result: Hospitals[] = [];
+  try {
+    let response = await axios.post(
+      `${process.env.REACT_APP_API}/user-hospitals`,
+      {
+        userId,
+      }
+    );
+    console.log("Hospital list response: ", response);
+    if (response.status === 200) {
+      result = response.data.map((hospitalData: any) => {
+        return {
+          Id: hospitalData.Id,
+          name: hospitalData.hospitalName,
+        };
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
 }

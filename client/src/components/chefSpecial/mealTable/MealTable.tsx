@@ -15,7 +15,7 @@ import {
   checkboxClasses,
 } from "@mui/material";
 
-import MealDropdown from "../mealDropdown/MealDropdown";
+import MealDropdown from "../CycleDetails/MealDropdown/MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 // import { Option } from "../types";
 // import { CycleData } from "../types";
@@ -50,6 +50,7 @@ interface MealTableProps {
   cycle: CycleData;
   mealType: MealType;
   allMeals: Meal[];
+  hospitalId: number | null;
 }
 
 interface RowData {
@@ -80,12 +81,23 @@ function adjustRowData(data: boolean[], days: number) {
   return [...data, ...Array(days - data.length).fill(false)];
 }
 
-const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
+const MealTable: React.FC<MealTableProps> = ({
+  cycle,
+  mealType,
+  allMeals,
+  hospitalId,
+}) => {
   // State to manage rows
   const [rows, setRows] = useState<RowData[]>([]);
 
+  // reset rows when hospitalId changes
+  useEffect(() => {
+    setRows([]);
+  }, [hospitalId]);
+
   // load all the meals and active days for the currently selected cycle and place the data into rows
   useEffect(() => {
+    console.log(cycle.Id);
     getCycleMealDays(cycle.Id, cycle.cycleDays, mealType.Id).then((result) => {
       if (result && result.mealDaysList) {
         let validMealDaysList = result.mealDaysList.filter(
@@ -110,31 +122,6 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
       }))
     );
   }, [cycle.cycleDays]);
-
-  // const prevMealsRef = useRef<Meal[]>([]);
-
-  // // Notify parent when row data changes
-  // useEffect(() => {
-  //   const validMeals = rows
-  //     .filter((row) => row.mealName && row.data.some((day) => day)) // Only include rows with a meal name and at least one checked day
-  //     .map((row) => ({
-  //       name: row.mealName,
-  //       days: row.data,
-  //     }));
-  //   // onUpdate(mealType, validMeals);
-
-  //   if (JSON.stringify(validMeals) !== JSON.stringify(prevMealsRef.current)) {
-  //     prevMealsRef.current = validMeals; // Update ref with new validMeals
-  //     onUpdate(mealType, validMeals);
-  //   }
-  // }, [rows, mealType, onUpdate]);
-
-  // const adjustRowData = (data: boolean[], days: number) => {
-  //   if (data.length > days) {
-  //     return data.slice(0, days);
-  //   }
-  //   return [...data, ...Array(days - data.length).fill(false)];
-  // };
 
   // function to add a new row to the cycle
   const handleAddRow = () => {
@@ -284,7 +271,7 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                         mealTypeId: 0,
                         mealTypes: [],
                         servedId: 0,
-                        isActive: true
+                        isActive: true,
                       }}
                       onChange={(newMeal) =>
                         handleMealChange(
@@ -293,23 +280,6 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                           newMeal ? newMeal.name : ""
                         )
                       }
-                      // value={
-                      //   row.mealName
-                      //     ? {
-                      //         value:
-                      //           options.find(
-                      //             (opt) => opt.label === row.mealName
-                      //           )?.value || 0,
-                      //         label: row.mealName,
-                      //       }
-                      //     : null
-                      // }
-                      // onChange={(selectedOption: any) =>
-                      //   handleMealChange(
-                      //     row.id,
-                      //     selectedOption ? selectedOption.label : ""
-                      //   )
-                      // }
                     />
                   </TableCell>
                   {row.days.map((checked, dayIndex) => (
@@ -330,7 +300,6 @@ const MealTable: React.FC<MealTableProps> = ({ cycle, mealType, allMeals }) => {
                   ))}
                 </StyledTableRow>
               ))}
-              {/* <TableRow>+</TableRow> */}
             </TableBody>
           </Table>
         </TableContainer>

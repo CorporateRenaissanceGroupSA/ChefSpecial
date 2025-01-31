@@ -4,8 +4,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  OutlinedInput,
-  Checkbox,
   ListItemText,
   SelectChangeEvent,
 } from "@mui/material";
