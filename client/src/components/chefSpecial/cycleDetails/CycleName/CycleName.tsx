@@ -13,7 +13,7 @@ const Label = styled.label<{ isFloating?: boolean }>`
   top: ${(props) => (props.isFloating ? "5px" : "30%")};
   left: 10px;
   font-size: ${(props) => (props.isFloating ? "0.75rem" : "1rem")};
-  color: #808080; 
+  color: #808080;
   transition: all 0.2s ease-in-out;
   pointer-events: none;
   z-index: 1;
@@ -37,6 +37,7 @@ interface CreatableSelectProps {
   value: SelectOption | null;
   onChange: (value: SelectOption | null) => void;
   placeholder?: string;
+  hospitalId: number | null;
 }
 
 const CreatableSelect: React.FC<CreatableSelectProps> = ({
@@ -44,6 +45,7 @@ const CreatableSelect: React.FC<CreatableSelectProps> = ({
   value,
   onChange,
   placeholder = "Cycle Name",
+  hospitalId,
 }) => {
   return (
     <Creatable<SelectOption, false, GroupBase<SelectOption>>
@@ -53,6 +55,7 @@ const CreatableSelect: React.FC<CreatableSelectProps> = ({
       onChange={(newValue) => onChange(newValue)}
       components={{ Control: CustomControl }}
       isClearable
+      isDisabled={hospitalId ? false : true}
       styles={{
         control: (base, state) => ({
           ...base,
@@ -91,11 +94,11 @@ const CreatableSelect: React.FC<CreatableSelectProps> = ({
           ...base,
           backgroundColor: state.isFocused ? "#F6F6F6" : "#FFF",
           color: state.isSelected ? "black" : "black",
-        })
+        }),
       }}
       placeholder={placeholder}
     />
-  );  
+  );
 };
 
 export default CreatableSelect;

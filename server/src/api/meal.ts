@@ -210,14 +210,14 @@ meal.post("/cycles", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
-  let onlyActive = false;
+  let onlyActive = true;
   if (reqData.onlyActive) {
     onlyActive = reqData.onlyActive;
   }
   let queryString = `
     SELECT DISTINCT(C.id), C.name FROM Ems.CSCycleItem as CI
     LEFT JOIN Ems.CSCycle as C ON C.Id = CI.cycleId
-    WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId} ${onlyActive ? "AND C.isActive = 'true' AND CI.isActive = 'true'" : ""}
+    WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId} ${onlyActive ? "AND CI.isActive = 'true'" : ""}
   `;
   let queryResult = await safeQuery(sql, queryString);
   if (!queryResult.success) {

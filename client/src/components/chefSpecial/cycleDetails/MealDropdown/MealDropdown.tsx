@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
-import { Meal, Option } from "../../../types";
+import { Meal, Option } from "../../../../types";
 
 const customStyles = {
   menuPortal: (base: any) => ({
@@ -64,7 +64,7 @@ function optionToMeal(option: Option | null): Meal | null {
       mealTypeId: 0,
       mealTypes: [],
       servedId: 0,
-      isActive: true
+      isActive: true,
     };
   }
 }
@@ -77,14 +77,15 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
-useEffect(() => {
-  console.log("Selected Option:", selectedOption);
-  console.log("Available Options:", options);
-}, [selectedOption, options]);
+
+  useEffect(() => {
+    console.log("Selected Option:", selectedOption);
+    console.log("Available Options:", options);
+  }, [selectedOption, options]);
 
   // convert meals to options every time allMeals changes
   useEffect(() => {
-    console.log(allMeals)
+    console.log(allMeals);
     const filteredOptions = allMeals
       .filter(
         (meal) =>
@@ -93,7 +94,7 @@ useEffect(() => {
           meal.isActive === true // Filter by active items
       )
       .map((meal) => mealToOption(meal))
-      .filter((option): option is Option => option !== null); 
+      .filter((option): option is Option => option !== null);
 
     console.log(
       `Filtered Meal options for mealTypeId ${mealTypeId}:`,
