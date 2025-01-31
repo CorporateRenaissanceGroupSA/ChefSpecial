@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import { Scheduler, SchedulerData } from "@bitnoi.se/react-scheduler";
 import dayjs from "dayjs";
 import "@bitnoi.se/react-scheduler/dist/style.css";
@@ -56,8 +56,35 @@ const mockedSchedulerData: SchedulerData = [
 ];
 
 const WeeklyView = () => {
+      const [range, setRange] = useState({
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      const handleRangeChange = useCallback((range:any) => {
+        setRange(range);
+      }, []);
+
   return (
-    <Scheduler data={mockedSchedulerData} isLoading />
+    <Scheduler
+      data={mockedSchedulerData}
+      isLoading
+      onRangeChange={handleRangeChange}
+      onTileClick={(clickedResource) => console.log(clickedResource)}
+      onItemClick={(item) => console.log(item)}
+    //   onFilterData={() => {
+    //     // Some filtering logic...
+    //     // setFilterButtonState(1);
+    //   }}
+    //   onClearFilterData={() => {
+    //     // Some clearing filters logic...
+    //     // setFilterButtonState(0);
+    //   }}
+    //   config={{
+    //     zoom: 0,
+    //     // filterButtonState,
+    //   }}
+    />
     // <div>Weekly Sch</div>
   );
 }
