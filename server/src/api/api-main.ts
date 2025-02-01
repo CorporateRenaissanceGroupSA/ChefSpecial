@@ -129,8 +129,7 @@ export function startApi(port: number = 4001) {
         .send("Required input field missing: " + requiredFieldMissing);
       return;
     }
-    let startDate = cleanDate(reqData.startDate);
-    if (startDate.toString() == "Invalid Date") {
+    if (cleanDate(reqData.startDate).toString() == "Invalid Date") {
       res
         .status(404)
         .send(
@@ -138,15 +137,16 @@ export function startApi(port: number = 4001) {
         );
       return;
     }
-    startDate = new Date(startDate.setHours(0, 0, 0, 0));
-    let endDate = cleanDate(reqData.endDate);
-    if (endDate.toString() == "Invalid Date") {
+    let startDate = formattedDate(cleanDate(reqData.startDate));
+
+    if (cleanDate(reqData.endDate).toString() == "Invalid Date") {
       res
         .status(404)
         .send("Could not convert endDate to a valid date: " + reqData.endDate);
       return;
     }
-    endDate = new Date(endDate.setHours(0, 0, 0, 0));
+    let endDate = formattedDate(cleanDate(reqData.endDate));
+
     if (startDate > endDate) {
       res
         .status(400)
@@ -163,8 +163,8 @@ export function startApi(port: number = 4001) {
     LEFT JOIN dbo.menuMeal as MT ON MT.Id = CI.mealTypeId
     LEFT JOIN Ems.CSMeal as M ON M.Id = CI.mealId
     WHERE 
-    C.StartDate <= '${formattedDate(endDate)}' AND 
-    (C.endDate IS NULL OR C.endDate >= '${formattedDate(startDate)}') 
+    C.StartDate <= '${endDate}' AND 
+    (C.endDate IS NULL OR C.endDate >= '${startDate}') 
     AND C.isActive = 'true' AND CI.isActive = 'true'
     ;
     `;
@@ -178,38 +178,81 @@ export function startApi(port: number = 4001) {
       return;
     }
     let data = dataQuery.result.recordset;
+    logger.debug("Query Results: ", data);
     let result: any = {};
 
-    for (
-      let calendarDate = startDate;
-      calendarDate <= endDate;
-      calendarDate = new Date(calendarDate.setDate(calendarDate.getDate() + 1))
-    ) {
+    let calendarDate = startDate;
+    while (calendarDate <= endDate) {
       let dateResult: any[] = [];
-      logger.debug("Calendar Date: " + calendarDate.toISOString());
+      logger.debug("Calendar Date: " + calendarDate);
       data.forEach((dataItem: any) => {
-        let itemCycleStartDate = new Date(dataItem.cycleStartDate);
-        let itemCycleEndDate = new Date(dataItem.cycleEndDate);
+        let itemCycleStartDate = formattedDate(
+          new Date(dataItem.cycleStartDate)
+        );
+        let itemCycleEndDate = dataItem.cycleEndDate
+          ? formattedDate(new Date(dataItem.cycleEndDate))
+          : undefined;
         if (
           itemCycleStartDate <= calendarDate &&
-          itemCycleEndDate >= calendarDate
+          (!itemCycleEndDate || itemCycleEndDate >= calendarDate)
         ) {
-          let daysSinceCycleStart = daysDiff(calendarDate, itemCycleStartDate);
-          logger.debug("Days since cycle start: " + daysSinceCycleStart);
+          logger.debug("Considering day for inclusion: ", dataItem);
+          let daysSinceCycleStart = daysDiff(
+            new Date(calendarDate),
+            new Date(itemCycleStartDate)
+          );
+          logger.debug("Days since cycle start: " + (daysSinceCycleStart + 1));
           let daysIntoCycle = daysSinceCycleStart % dataItem.cycleDays;
+          logger.debug("Days into cycle: " + daysIntoCycle);
           if (dataItem.mealCycleDay == daysIntoCycle) {
             logger.debug(
-              `Calendar Date: ${calendarDate.toISOString()} Days Into Cycle: ${daysIntoCycle} Data Item: `,
+              `Calendar Date: ${calendarDate} Days Into Cycle: ${daysIntoCycle} Data Item: `,
               dataItem
             );
+            dataItem.calendarDate = calendarDate;
             dateResult.push(dataItem);
           }
         }
       });
-      result[formattedDate(calendarDate)] = dateResult;
+      result[calendarDate] = dateResult;
+      calendarDate = formattedDate(
+        new Date(
+          new Date(calendarDate).setDate(new Date(calendarDate).getDate() + 1)
+        )
+      );
     }
-    // console.log("Result: ", result);
+    // for (
+    //   let calendarDate = startDate;
+    //   calendarDate <= endDate;
+    //   calendarDate = new Date(new Date(calendarDate).setDate(calendarDate.getDate() + 1)))
+    // ) {
+    //   let dateResult: any[] = [];
+    //   logger.debug("Calendar Date: " + formattedDate(calendarDate));
+    //   data.forEach((dataItem: any) => {
+    //     let itemCycleStartDate = new Date(dataItem.cycleStartDate);
+    //     let itemCycleEndDate = new Date(dataItem.cycleEndDate);
+    //     if (
+    //       itemCycleStartDate <= calendarDate &&
+    //       (!itemCycleEndDate || itemCycleEndDate >= calendarDate)
+    //     ) {
+    //       logger.debug("Considering day for inclusion: ", dataItem);
+    //       let daysSinceCycleStart = daysDiff(calendarDate, itemCycleStartDate);
+    //       logger.debug("Days since cycle start: " + daysSinceCycleStart);
+    //       let daysIntoCycle = daysSinceCycleStart % dataItem.cycleDays;
+    //       if (dataItem.mealCycleDay == daysIntoCycle) {
+    //         logger.debug(
+    //           `Calendar Date: ${calendarDate.toISOString()} Days Into Cycle: ${daysIntoCycle} Data Item: `,
+    //           dataItem
+    //         );
+    //         dataItem.calendarDate = calendarDate;
+    //         dateResult.push(dataItem);
+    //       }
+    //     }
+    //   });
+    //   result[formattedDate(calendarDate)] = dateResult;
+    // }
 
+    // console.log("Result: ", result);
     res.send(result);
   });
 
@@ -223,3 +266,5 @@ function daysDiff(date1: Date, date2: Date): number {
   let diff = Math.round(Math.abs(date1.getTime() - date2.getTime()) / oneDay);
   return diff;
 }
+
+function transFormCalendarDate(result: any): any {}
