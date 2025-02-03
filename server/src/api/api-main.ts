@@ -70,7 +70,7 @@ export function startApi(port: number = 4001) {
     }
 
     const queryStr = `
-    SELECT DISTINCT MM.Id mealId, MM.MealDescription as mealType
+    SELECT DISTINCT MM.Id mealId, MM.MealDescription as mealType, MM.CutOffTime
     FROM dbo.Hospital H 
     JOIN dbo.HospitalMenu as HM ON H.Id = HM.Hospital
     JOIN dbo.MenuItem as MI ON HM.Menu = MI.Menu

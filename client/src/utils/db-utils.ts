@@ -6,7 +6,8 @@ import {
   MealDays,
   MealType,
   Served,
-  Hospitals
+  Hospitals,
+  CalendarMeals,
 } from "../types";
 
 // utility function to get a list of meals for a hospital
@@ -49,6 +50,7 @@ export async function getMealTypeList(hospitalId: number): Promise<MealType[]> {
         return {
           Id: mealTypeData.mealId,
           name: mealTypeData.mealType,
+          mealTypeTime: mealTypeData.CutOffTime,
         };
       });
     }
@@ -134,7 +136,7 @@ export async function getCycleDetail(
 // utility function to get all cycles that are linked to a specified meal
 export async function getCycleMeals(
   hospitalId: number,
-  mealId: number,
+  mealId: number
 ): Promise<{ cycleInfo: CycleMeals[] } | undefined> {
   console.log("Getting detail for hospital: " + hospitalId + "meal" + mealId);
   let apiResult = await axios.post(`${process.env.REACT_APP_API}/meal/cycles`, {
@@ -358,4 +360,31 @@ export async function getHospitals(userId: number): Promise<Hospitals[]> {
     console.error(error);
   }
   return result;
+}
+
+// get meals list for calendar view
+export async function getCalendarMeals(
+  startDate: string,
+  endDate: string
+): Promise<CalendarMeals[]> {
+  let apiResult = await axios.post(
+    `${process.env.REACT_APP_API}/calendar-meals`,
+    {
+      startDate,
+      endDate,
+    }
+  );
+  console.log("Calendar Meals detail apiResult: ", apiResult);
+  if (apiResult.status !== 200) {
+    console.error(
+      "Problem getting calendar meals for start & end date: " +
+        startDate +
+        endDate,
+      apiResult
+    );
+    return undefined;
+  }
+  // let result = apiResult
+  console.log("Calendar Meals result: ", apiResult);
+  return apiResult.data;
 }
