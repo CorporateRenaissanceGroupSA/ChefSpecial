@@ -4,6 +4,7 @@ import { logger } from "../utils/logger";
 import { sql } from "../index";
 import { meal } from "./meal";
 import { cycle } from "./cycle";
+import { note } from "./note";
 import {
   checkRequiredFields,
   cleanDate,
@@ -18,6 +19,7 @@ export function startApi(port: number = 4001) {
 
   app.use("/cycle", cycle);
   app.use("/meal", meal);
+  app.use("/note", note);
 
   // returns the hospitals where the specified user is assigned to catering roles
   app.post("/user-hospitals", async (req, res) => {

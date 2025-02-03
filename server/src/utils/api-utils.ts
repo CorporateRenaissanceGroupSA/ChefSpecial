@@ -3,7 +3,7 @@ import { logger } from "./logger";
 export class FieldInfo {
   constructor(
     public name: string, // the name of the field as it will appear in the api data
-    public type: "number" | "date" | "other" = "other", // the type of the data used for checking and query construction
+    public type: "number" | "date" | "id" | "other" = "other", // the type of the data used for checking and query construction
     public required: boolean = false, // whether the field is a required field in the api data
     public dbName: string = "", // the name of the field in the db table
     public mergeOn: boolean = false // whether to include this field in the MERGE ON string
@@ -161,7 +161,7 @@ export function createMergeQuery(
   reqData: any,
   fields: FieldInfo[]
 ): string {
-  logger.debug("Create Merge Query reqData: ", reqData);
+  // console.debug("Create Merge Query reqData: ", reqData);
   let newId = !reqData.Id || reqData.Id == "null";
   let getNewIdString = newId ? "SELECT SCOPE_IDENTITY() AS Id;" : "";
   let selectStringFields: string[] = [];
@@ -170,7 +170,11 @@ export function createMergeQuery(
     // if (field.name == "provinceId") {
     //   logger.debug("query field data: ", reqData[field.name]);
     // }
-    if (reqData[field.name] == undefined || reqData[field.name] == "null") {
+    if (
+      reqData[field.name] == undefined ||
+      reqData[field.name] == "null" ||
+      (field.type == "id" && reqData[field.name] == 0)
+    ) {
       selectStringFields.push("null " + field.dbName);
     } else {
       if (field.type == "number") {
@@ -215,6 +219,66 @@ export function createMergeQuery(
     `;
   return mergeQuery;
 }
+
+// export function createMergeQuery(
+//   dbTable: string,
+//   reqData: any,
+//   fields: FieldInfo[]
+// ): string {
+//   logger.debug("Create Merge Query reqData: ", reqData);
+//   let newId = !reqData.Id || reqData.Id == "null";
+//   let getNewIdString = newId ? "SELECT SCOPE_IDENTITY() AS Id;" : "";
+//   let selectStringFields: string[] = [];
+//   let mergeOnFields: string[] = [];
+//   fields.forEach((field) => {
+//     // if (field.name == "provinceId") {
+//     //   logger.debug("query field data: ", reqData[field.name]);
+//     // }
+//     if (reqData[field.name] == undefined || reqData[field.name] == "null") {
+//       selectStringFields.push("null " + field.dbName);
+//     } else {
+//       if (field.type == "number") {
+//         selectStringFields.push(reqData[field.name] + " " + field.dbName);
+//       } else {
+//         selectStringFields.push(
+//           "'" + reqData[field.name] + "' " + field.dbName
+//         );
+//       }
+//     }
+//     if (field.mergeOn) {
+//       mergeOnFields.push(field.dbName);
+//     }
+//   });
+//   let selectString = "SELECT " + selectStringFields.join(", ");
+//   let fieldsWithoutId = fields.filter((field) => field.dbName != "Id");
+//   let updateString = fieldsWithoutId
+//     .map((field) => {
+//       return "Target." + field.dbName + " = Source." + field.dbName;
+//     })
+//     .join(", ");
+//   let insertString =
+//     "(" +
+//     fieldsWithoutId.map((field) => field.dbName).join(", ") +
+//     ") VALUES (" +
+//     fieldsWithoutId.map((field) => "source." + field.dbName).join(", ") +
+//     ")";
+//   let mergeOnString = "Target.Id = Source.Id";
+//   if (mergeOnFields.length > 0) {
+//     mergeOnString = mergeOnFields
+//       .map((fieldName) => `Target.${fieldName} = Source.${fieldName}`)
+//       .join(" AND ");
+//   }
+//   const mergeQuery = `
+//     MERGE ${dbTable} AS Target
+//     USING (${selectString}) AS Source
+//     ON (${mergeOnString})
+//     WHEN MATCHED THEN UPDATE SET ${updateString}
+//     WHEN NOT MATCHED THEN INSERT ${insertString}
+//     ;
+//     ${getNewIdString}
+//     `;
+//   return mergeQuery;
+// }
 
 export function getConditionStr(criteria: string): string {
   let result = "";
