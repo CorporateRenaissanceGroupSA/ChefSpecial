@@ -137,6 +137,58 @@ meal.post("/merge", async (req, res) => {
   });
 });
 
+meal.post("/mealtypeoverride-merge", async (req, res) => {
+  logger.api('Received request to "/meal/mealtypeoverride-merge" api endpoint');
+  let reqData = req.body;
+  logger.api("Req Data: ", reqData);
+  const mergeFields: FieldInfo[] = [
+    new FieldInfo("mealTypeId", "number", true, "", true),
+    new FieldInfo("hospitalId", "number", true, "", true),
+    new FieldInfo("name", "other", false),
+    new FieldInfo("cutoffTime", "other", false),
+    new FieldInfo("servedTime", "other", false),
+    new FieldInfo("isActive", "other", false),
+    new FieldInfo("createdBy", "number", false),
+  ];
+  let requiredFieldMissing = checkRequiredFields(
+    reqData,
+    getRequiredFields(mergeFields)
+  );
+  if (requiredFieldMissing) {
+    logger.error("Required input field missing: " + requiredFieldMissing);
+    res
+      .status(400)
+      .send("Required input field missing: " + requiredFieldMissing);
+    return;
+  }
+
+  const mergeQueryString = createMergeQuery(
+    "Ems.CSMealTypeOverride",
+    reqData,
+    mergeFields
+  );
+  logger.debug("Merge MealTypeOverride query string: ", mergeQueryString);
+  let mergeQuery = await safeQuery(sql, mergeQueryString);
+  if (!mergeQuery.success) {
+    res.status(400).send({
+      message: "Problem processing query.",
+      error: mergeQuery.result,
+      queryString: mergeQuery.queryString,
+    });
+    return;
+  }
+  logger.debug("Merge MealTypeOverride query result: ", mergeQuery);
+  let id;
+  if (reqData.Id == "null" || !reqData.Id) {
+    id = mergeQuery.result.recordset[0].Id;
+  } else {
+    id = reqData.Id;
+  }
+  res.send({
+    Id: id,
+  });
+});
+
 meal.post("/mealtotype-merge", async (req, res) => {
   logger.api('Received request to "/meal/mealtotype-merge" api endpoint');
   let reqData = req.body;
