@@ -70,15 +70,27 @@ export function startApi(port: number = 4001) {
     }
 
     const queryStr = `
-    SELECT DISTINCT MM.Id mealId, MM.MealDescription as mealType, MM.CutOffTime
-    FROM dbo.Hospital H 
+    SELECT DISTINCT MM.Id mealTypeId, MM.MealDescription as mealTypeNameGlobal, MM.CutOffTime as mealTypeCutoffGlobal,
+    MO.name as mealTypeNameHospital, MO.cutoffTime as mealTypeCutoffHospital, MO.servedTime as mealTypeServedTime
+    FROM dbo.Hospital H
     JOIN dbo.HospitalMenu as HM ON H.Id = HM.Hospital
     JOIN dbo.MenuItem as MI ON HM.Menu = MI.Menu
     JOIN dbo.MenuMeal as MM ON MM.id = MI.Meal
+    LEFT JOIN Ems.CSMealTypeOverride as MO ON MO.mealTypeId = MI.Meal AND MO.hospitalId = H.Id
     WHERE H.Id = ${reqData.hospitalId}
     ORDER BY MM.Id ASC
     ;
     `;
+    // const queryStr = `
+    // SELECT DISTINCT MM.Id mealId, MM.MealDescription as mealTypeNameGlobal, MM.CutOffTime as mealTypeCutoffGlobal
+    // FROM dbo.Hospital H
+    // JOIN dbo.HospitalMenu as HM ON H.Id = HM.Hospital
+    // JOIN dbo.MenuItem as MI ON HM.Menu = MI.Menu
+    // JOIN dbo.MenuMeal as MM ON MM.id = MI.Meal
+    // WHERE H.Id = ${reqData.hospitalId}
+    // ORDER BY MM.Id ASC
+    // ;
+    // `;
 
     let resultQuery = await safeQuery(sql, queryStr);
     if (!resultQuery.success) {
@@ -89,6 +101,18 @@ export function startApi(port: number = 4001) {
       return;
     }
     let result = resultQuery.result.recordset;
+    // set the mealType name and cutoff to hospital value if it exists otherwise use global value
+    result = result.map((data: any) => {
+      data.mealTypeName = data.mealTypeNameGlobal;
+      if (data.mealTypeNameHospital) {
+        data.mealTypeName = data.mealTypeNameHospital;
+      }
+      data.mealTypeCutoff = data.mealTypeCutoffGlobal;
+      if (data.mealTypeCutoffHospital) {
+        data.mealTypeCutoff = data.mealTypeCutoffHospital;
+      }
+      return data;
+    });
     console.log("Result: ", result);
     res.send(result);
   });
