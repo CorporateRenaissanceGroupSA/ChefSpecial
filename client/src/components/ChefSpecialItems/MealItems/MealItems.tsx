@@ -19,9 +19,7 @@ import {
   Modal,
   Box,
   Chip,
-  TableFooter,
 } from "@mui/material";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import {
   getMealsList,
   getServedList,
@@ -32,7 +30,11 @@ import {
 } from "../../../utils/db-utils";
 import { CycleData, Meal, MealDays, MealType, Served } from "../../../types";
 import _ from "lodash";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  PlusCircleIcon,
+} from "@heroicons/react/24/outline";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {

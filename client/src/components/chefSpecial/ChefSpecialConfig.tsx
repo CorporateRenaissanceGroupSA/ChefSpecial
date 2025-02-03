@@ -128,6 +128,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
         description: "",
         mealTypeId: 0,
         mealTypes: [],
+        mealTypeTime: "",
         servedId: 0,
         served: "",
         itemIsActive: true,

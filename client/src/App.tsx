@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import "./App.scss";
 import { Tabs, Tab } from "@mui/material";
-import { ChefSpecialConfig, MealItems, WeeklyView } from "./Components";
+import { ChefSpecialConfig, MealItems, WeeklyView, MealTimes, Alerts } from "./Components";
 // import MealItems from "./Components/ChefSpecialItems/MealItems/MealItems";
 import { getHospitals, getMealTypeList, getMealsList } from "./utils/db-utils";
 import { Hospitals, Meal, MealType, MealDays } from "./types";
 import HospitalDropdown from "./Components/HospitalDropdown";
+import { each } from "lodash";
+import "../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 
 const App: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -108,16 +110,10 @@ const App: React.FC = () => {
       )}
 
       {selectedTab === 2 && (
-        <div>
-          <h2>Meal Times</h2>
-        </div>
+        <MealTimes hospitalId={hospitalId} mealTypes={mealTypes} />
       )}
 
-      {selectedTab === 3 && (
-        <div>
-          <h2>Alerts</h2>
-        </div>
-      )}
+      {selectedTab === 3 && <Alerts hospitalId={hospitalId} />}
 
       {selectedTab === 4 && (
         <div>
