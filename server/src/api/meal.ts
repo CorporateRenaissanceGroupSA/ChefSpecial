@@ -137,8 +137,8 @@ meal.post("/merge", async (req, res) => {
   });
 });
 
-meal.post("/mealtype-merge", async (req, res) => {
-  logger.api('Received request to "/meal/mealtype-merge" api endpoint');
+meal.post("/mealtotype-merge", async (req, res) => {
+  logger.api('Received request to "/meal/mealtotype-merge" api endpoint');
   let reqData = req.body;
   logger.api("Req Data: ", reqData);
   const mergeFields: FieldInfo[] = [

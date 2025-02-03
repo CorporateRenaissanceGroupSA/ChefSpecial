@@ -328,7 +328,7 @@ export async function mergeMealType(
   };
   try {
     let apiResult = await axios.post(
-      `${process.env.REACT_APP_API}/meal/mealtype-merge`,
+      `${process.env.REACT_APP_API}/meal/mealtotype-merge`,
       mergeItemInput
     );
     console.log("Meal Type merge apiResult: ", apiResult);
