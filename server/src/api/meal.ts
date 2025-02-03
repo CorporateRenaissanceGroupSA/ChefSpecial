@@ -34,7 +34,7 @@ meal.post("/list", async (req, res) => {
     LEFT JOIN dbo.Hospital as H ON M.hospitalId = H.Id
     LEFT JOIN dbo.ItemServed as I ON M.servedId = I.Id
     LEFT JOIN dbo.Users as U ON M.createdBy = U.Id
-    ${mealTypeId != undefined ? "LEFT JOIN Ems.CSMealType as MT ON M.Id = MT.mealId" : ""}
+    ${mealTypeId != undefined ? "LEFT JOIN Ems.CSMealToType as MT ON M.Id = MT.mealId" : ""}
     WHERE M.hospitalId = ${reqData.hospitalId} ${mealTypeId != undefined ? "AND (MT.mealTypeId = " + mealTypeId + " AND MT.isActive = 'true')" : ""}
   `;
   let queryResult = await safeQuery(sql, mealQueryString);
@@ -53,7 +53,7 @@ meal.post("/list", async (req, res) => {
   });
 
   let mealTypeQueryString = `
-  SELECT MT.* from Ems.CSMealType as MT
+  SELECT MT.* from Ems.CSMealToType as MT
   RIGHT JOIN Ems.CSMeal as M ON MT.mealId = M.Id
   WHERE M.hospitalId = ${reqData.hospitalId} AND MT.isActive = 'true' ${mealTypeId != undefined ? "AND MT.mealTypeId = " + mealTypeId : ""}
   `;
@@ -170,11 +170,11 @@ meal.post("/mealtype-merge", async (req, res) => {
   }
 
   const mergeQueryString = createMergeQuery(
-    "Ems.CSMealType",
+    "Ems.CSMealToType",
     reqData,
     mergeFields
   );
-  logger.debug("Merge MealType query string: ", mergeQueryString);
+  logger.debug("Merge MealToType query string: ", mergeQueryString);
   let mergeQuery = await safeQuery(sql, mergeQueryString);
   if (!mergeQuery.success) {
     res.status(400).send({
@@ -184,7 +184,7 @@ meal.post("/mealtype-merge", async (req, res) => {
     });
     return;
   }
-  logger.debug("Merge Meal query result: ", mergeQuery);
+  logger.debug("Merge MealToType query result: ", mergeQuery);
   let id;
   if (reqData.Id == "null" || !reqData.Id) {
     id = mergeQuery.result.recordset[0].Id;
