@@ -80,7 +80,7 @@ const MealItems: React.FC<MealItemsProps> = ({
   const [allLocalMeals, setAllLocalMeals] = useState<Meal[]>(allMeals);
   const [servedOptions, setServedOptions] = useState<Served[]>([]);
   const [checked, setChecked] = React.useState(true);
-  const [editRowId, setEditRowId] = useState<number | null>(null); // Track which row is being edited
+  const [editRowId, setEditRowId] = useState<number | null>(null);
   const [tempRowData, setTempRowData] = useState<Partial<Meal> | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const [inactiveToggleId, setInactiveToggleId] = useState<number | null>(null);
@@ -161,7 +161,6 @@ const MealItems: React.FC<MealItemsProps> = ({
 
   // function to add a new row to the cycle
   const handleAddRow = () => {
-    // const tempId = `temp-${Date.now()}`; // Generate a temporary ID for the new row
     const newMeal: Meal = {
       Id: null,
       name: "",
@@ -613,6 +612,7 @@ const MealItems: React.FC<MealItemsProps> = ({
                   <StyledTableCell>
                     {editRowId === meal.Id && (
                       <Button
+                        color="success"
                         variant="contained"
                         size="small"
                         onClick={() => handleSaveRow(meal.Id)}

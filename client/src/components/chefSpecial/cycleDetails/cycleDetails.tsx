@@ -306,7 +306,6 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={["DatePicker", "DatePicker"]}>
                 <DatePicker
                   defaultValue={dayjs(
                     currentCycle?.startDate || new Date().toJSON()
@@ -319,7 +318,6 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                   label="Cycle Start Date"
                   format="DD/MM/YYYY"
                 />
-              </DemoContainer>
             </LocalizationProvider>
           </ThemeProvider>
         </div>
@@ -327,7 +325,6 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
         <div className="col-span-2">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={["DatePicker", "DatePicker"]}>
                 <DatePicker
                   onChange={(date: Dayjs | null) => {
                     setEndDate(date);
@@ -343,7 +340,6 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                   label="Cycle End Date"
                   format="DD/MM/YYYY"
                 />
-              </DemoContainer>
             </LocalizationProvider>
           </ThemeProvider>
         </div>

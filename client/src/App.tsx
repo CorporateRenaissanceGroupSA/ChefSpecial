@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import "./App.scss";
 import { Tabs, Tab } from "@mui/material";
-import { ChefSpecialConfig, MealItems, WeeklyView, MealTimes, Alerts } from "./Components";
+import {
+  ChefSpecialConfig,
+  MealItems,
+  WeeklyView,
+  MealTimes,
+  Alerts,
+} from "./Components";
 // import MealItems from "./Components/ChefSpecialItems/MealItems/MealItems";
 import { getHospitals, getMealTypeList, getMealsList } from "./utils/db-utils";
 import { Hospitals, Meal, MealType, MealDays } from "./types";
@@ -15,7 +21,7 @@ const App: React.FC = () => {
   const [hospitalId, setHospitalId] = useState<number | null>(null);
   const [allMeals, setAllMeals] = useState<Meal[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
-  const [userId, setUserId] = useState(81);
+  const [userId, setUserId] = useState<number>(81);
   const [showWeeklyView, setShowWeeklyView] = useState(false);
 
   const iframeUrl = window.location.href;
@@ -43,7 +49,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (hospitalId != null) {
-      console.log("updated holspitalId: ", hospitalId);
+      console.log("updated hospitalId: ", hospitalId);
 
       // Load meal types and meals
       getMealTypeList(hospitalId).then((result) => {
@@ -78,8 +84,8 @@ const App: React.FC = () => {
         <Tab className="tabs__item" label="Chef Special" />
         <Tab className="tabs__item" label="Chef Special Items" />
         <Tab className="tabs__item" label="Meal Times" />
-        <Tab className="tabs__item" label="Alerts" />
-        <Tab className="tabs__item" label="Patient Alerts" />
+        <Tab className="tabs__item" label="Staff Notifications" />
+        <Tab className="tabs__item" label="Patient Notifications" />
         <HospitalDropdown
           hospitals={hospitals}
           hospitalId={hospitalId}
@@ -110,14 +116,14 @@ const App: React.FC = () => {
       )}
 
       {selectedTab === 2 && (
-        <MealTimes hospitalId={hospitalId} mealTypes={mealTypes} />
+        <MealTimes hospitalId={hospitalId} setMealTypes={setMealTypes} />
       )}
 
-      {selectedTab === 3 && <Alerts hospitalId={hospitalId} />}
+      {selectedTab === 3 && <Alerts hospitalId={hospitalId} userId={userId} />}
 
       {selectedTab === 4 && (
         <div>
-          <h2>Patient Alerts</h2>
+          <h2>Patient Notifications</h2>
         </div>
       )}
     </div>
