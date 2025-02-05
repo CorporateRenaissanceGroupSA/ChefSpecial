@@ -182,7 +182,7 @@ export function startApi(port: number = 4001) {
 
     const queryStr = `
     SELECT C.Id as cycleId, C.name as cycleName, C.startDate as cycleStartDate, C.endDate as cycleEndDate, C.cycleDays, C.hospitalId, H.Name as hospitalName, CI.mealTypeId, 
-    MT.mealName as mealTypeName, M.Id as mealId, M.name as mealName, CI.cycleDay as mealCycleDay
+    MT.mealName as mealTypeName, M.Id as mealId, M.name as mealName, CI.cycleDay as mealCycleDay, CI.Id as cycleItemId
     FROM Ems.CSCycle as C
     LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
     RIGHT JOIN Ems.CSCycleItem as CI ON CI.cycleId = C.Id

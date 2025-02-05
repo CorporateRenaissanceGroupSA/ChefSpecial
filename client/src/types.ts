@@ -68,7 +68,7 @@ export interface Hospitals {
   name: string;
 }
 
-export interface CalendarMeals {
+export interface MealEntry {
   cycleId: number;
   mealId: number;
   hospitalId: number;
@@ -77,6 +77,16 @@ export interface CalendarMeals {
   mealName: string;
   cycleName: string;
   calendarDate: string;
+  cycleDays: number;
+  cycleEndDate: string;
+  cycleStartDate: string;
+  hospitalName: string;
+  mealCycleDay: number;
+  cycleItemId: number;
+}
+
+export interface CalendarMeals {
+  [date: string]: MealEntry[];
 }
 
 export interface Notes {

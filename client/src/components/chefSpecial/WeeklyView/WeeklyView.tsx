@@ -1,100 +1,98 @@
-import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-import Calendar from "react-weekly-calendar";
+import React, { useEffect, useState, useMemo } from "react";
+// import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import { format, addDays, subDays, startOfWeek, endOfWeek } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
 import { getCalendarMeals } from "../../../utils/db-utils";
-import { WeeklyNavigation } from "./WeeklyNavigation";
-import { CalendarMeals } from "../../../types";
+import { CalendarMeals, MealEntry } from "../../../types";
 import {
-  Button,
+  TableContainer,
   Table,
   TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
+  TableHead,
   Paper,
+  TableCell,
+  Button,
+  tableCellClasses,
+  TablePagination,
+  TextField,
 } from "@mui/material";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from "@tanstack/react-table";
 
-const WeeklyView = () => {
-  const [calendarDate, setCalendarDate] = useState(new Date());
-  const [meals, setMeals] = useState<CalendarMeals[]>([]);
+// interface WeeklyViewProps {
+//   calendarMeals: Record<string, MealEntry[]>;
+// }
 
-  // Format date as "Mon\n2 Feb"
-  const formatDayHeader = (date: Date) => {
-    return `${date.toLocaleDateString("en-US", {
-      weekday: "short",
-    })}\n${date.getDate()} ${date.toLocaleDateString("en-US", {
-      month: "short",
-    })}`;
-  };
+// Date Localization
+// const locales = { "en-US": enUS };
+// const localizer = dateFnsLocalizer({
+//   format,
+//   parse,
+//   startOfWeek,
+//   getDay,
+//   locales,
+// });
 
-  // Get start and end of the current week
-  const getWeekDates = (startDate: Date) => {
-    const startOfWeek = new Date(startDate);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get Sunday
-    return Array.from({ length: 7 }, (_, i) => {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
-      return day;
-    });
-  };
+const WeeklyViewer = () => {
+  const today = new Date();
+  const apiEndDate = addDays(today, 180); // 6 months from today
 
+  // Separate state for the weekly calendar view
+  const [weekStart, setWeekStart] = useState(
+    startOfWeek(today, { weekStartsOn: 1 })
+  );
+  const [weekEnd, setWeekEnd] = useState(endOfWeek(today, { weekStartsOn: 1 }));
+  const [meals, setMeals] = useState<CalendarMeals>({});
+  const [mealTypes, setMealTypes] = useState<string[]>([]);
+
+  // Fetch Meals (for the next 6 months)
   useEffect(() => {
-    const weekDates = getWeekDates(calendarDate);
-    const startDate = weekDates[0].toISOString().split("T")[0];
-    const endDate = weekDates[6].toISOString().split("T")[0];
+    const formattedStart = format(today, "yyyy-MM-dd");
+    const formattedEnd = format(apiEndDate, "yyyy-MM-dd");
 
-    getCalendarMeals(startDate, "2025-03-31").then((data) => {
-      setMeals(Array.isArray(data) ? data : []);
-    });
-  }, [calendarDate]);
+    getCalendarMeals(formattedStart, formattedEnd)
+      .then((data) => {
+        console.log("API Response:", data);
+        // setMeals(data || {});
 
-  // Extract unique meal types
-  const mealTypes = Array.from(new Set(meals.map((meal) => meal.mealTypeName)));
+        if (typeof data === "object") {
+          // Ensure only valid meal entries are included
+          const filteredMeals: CalendarMeals = Object.entries(data).reduce(
+            (acc, [date, meal]) => {
+              if (Array.isArray(meal) && meal.length > 0) {
+                acc[date] = meal;
+              }
+              return acc;
+            },
+            {} as CalendarMeals
+          );
+          console.log("Filtered Meals:", filteredMeals);
+          setMeals(filteredMeals);
+        } else {
+          console.error("Unexpected API response:", data);
+          setMeals({});
+        }
 
-  // Structure data as { [mealType]: { [day]: [meals] } }
-  const mealData = mealTypes.map((mealType) => {
-    const row: { [key: string]: string } = { mealType };
-    getWeekDates(calendarDate).forEach((day) => {
-      const dateStr = day.toISOString().split("T")[0];
-      const mealsForDay = meals
-        .filter(
-          (meal) =>
-            meal.mealTypeName === mealType && meal.calendarDate === dateStr
-        )
-        .map((meal) => `${meal.mealName} (${meal.cycleName})`)
-        .join(", ");
-      row[dateStr] = mealsForDay || "—"; // Fallback if no meal
-    });
-    return row;
-  });
+        // Extract unique meal types
+        const types = new Set<string>();
+        Object.values(data).forEach((dayMeals: any) => {
+          dayMeals.forEach((meal: any) => types.add(meal.mealTypeName));
+        });
+        setMealTypes([...types]);
+      })
+      .catch((error) => console.error("Error fetching meals:", error));
+  }, []);
 
-  // Column Definitions
-  const columns = [
-    {
-      header: "Meal Type",
-      accessorKey: "mealType",
-    },
-    ...getWeekDates(calendarDate).map((date) => ({
-      header: formatDayHeader(date),
-      accessorKey: date.toISOString().split("T")[0],
-    })),
-  ];
-
-  // React Table Instance
-  const table = useReactTable({
-    data: mealData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+  // Get meals for a specific day & type
+  const getMealForDay = (date: Date, mealType: string) => {
+    console.log(meals)
+    const dateKey = format(date, "yyyy-MM-dd");
+    const dayMeals = meals[dateKey] || [];
+    const meal = dayMeals.find((m) => m.mealTypeName === mealType);
+    return meal ? `${meal.mealName} (${meal.cycleName})` : "No Meal";
+  };
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       {/* Navigation */}
       <div
         style={{
@@ -104,69 +102,82 @@ const WeeklyView = () => {
         }}
       >
         <Button
-          onClick={() =>
-            setCalendarDate(
-              new Date(calendarDate.setDate(calendarDate.getDate() - 7))
-            )
-          }
+          onClick={() => {
+            setWeekStart(subDays(weekStart, 7));
+            setWeekEnd(subDays(weekEnd, 7));
+          }}
         >
           Previous Week
         </Button>
-        <h2>Meal Schedule</h2>
+        <h2>Weekly Meal Plan</h2>
         <Button
-          onClick={() =>
-            setCalendarDate(
-              new Date(calendarDate.setDate(calendarDate.getDate() + 7))
-            )
-          }
+          onClick={() => {
+            setWeekStart(addDays(weekStart, 7));
+            setWeekEnd(addDays(weekEnd, 7));
+          }}
         >
           Next Week
         </Button>
       </div>
 
-      {/* Meal Schedule Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {table.getHeaderGroups().map((headerGroup) =>
-                headerGroup.headers.map((header) => (
-                  <TableCell
-                    key={header.id}
-                    style={{ whiteSpace: "pre-line", fontWeight: "bold" }}
+      {/* Table Layout */}
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={headerCellStyle}>Meal Type</th>
+            {[...Array(7)].map((_, i) => {
+              const day = addDays(weekStart, i);
+              return (
+                <th key={i} style={headerCellStyle}>
+                  {format(day, "EEE dd")}
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {mealTypes.map((type) => (
+            <tr key={type}>
+              <td style={mealTypeCellStyle}>{type}</td>
+              {[...Array(7)].map((_, i) => {
+                const day = addDays(weekStart, i);
+                console.log(day)
+                return (
+                  <td
+                    key={i}
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "10px",
+                      textAlign: "center",
+                    }}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableCell>
-                ))
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    onMouseEnter={(e) =>
-                      e.currentTarget.classList.add("addPlanStyle")
-                    }
-                    onMouseLeave={(e) =>
-                      e.currentTarget.classList.remove("addPlanStyle")
-                    }
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    {getMealForDay(day, type)}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default WeeklyView;
+// Styles
+const headerCellStyle = {
+  border: "1px solid #ddd",
+  padding: "10px",
+  background: "#f4f4f4",
+};
+const mealTypeCellStyle = {
+  border: "1px solid #ddd",
+  padding: "10px",
+  fontWeight: "bold",
+};
+const mealCellStyle = {
+  border: "1px solid #ddd",
+  padding: "10px",
+  textAlign: "center",
+};
+
+export default WeeklyViewer;
