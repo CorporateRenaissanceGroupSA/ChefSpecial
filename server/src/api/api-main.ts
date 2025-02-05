@@ -182,11 +182,12 @@ export function startApi(port: number = 4000) {
 
     const queryStr = `
     SELECT C.Id as cycleId, C.name as cycleName, C.startDate as cycleStartDate, C.endDate as cycleEndDate, C.cycleDays, C.hospitalId, H.Name as hospitalName, CI.mealTypeId, 
-    MT.mealName as mealTypeName, M.Id as mealId, M.name as mealName, CI.cycleDay as mealCycleDay
+    IIF(MO.name IS NOT NULL,MO.name, MT.mealName) as mealTypeName, M.Id as mealId, M.name as mealName, CI.cycleDay as mealCycleDay
     FROM Ems.CSCycle as C
     LEFT JOIN dbo.Hospital as H ON C.hospitalId = H.Id
     RIGHT JOIN Ems.CSCycleItem as CI ON CI.cycleId = C.Id
     LEFT JOIN dbo.menuMeal as MT ON MT.Id = CI.mealTypeId
+    LEFT JOIN Ems.CSMealTypeOverride as MO ON MO.mealTypeId = CI.mealTypeId
     LEFT JOIN Ems.CSMeal as M ON M.Id = CI.mealId
     WHERE 
     C.hospitalId = ${reqData.hospitalId} AND
@@ -248,37 +249,6 @@ export function startApi(port: number = 4000) {
         )
       );
     }
-    // for (
-    //   let calendarDate = startDate;
-    //   calendarDate <= endDate;
-    //   calendarDate = new Date(new Date(calendarDate).setDate(calendarDate.getDate() + 1)))
-    // ) {
-    //   let dateResult: any[] = [];
-    //   logger.debug("Calendar Date: " + formattedDate(calendarDate));
-    //   data.forEach((dataItem: any) => {
-    //     let itemCycleStartDate = new Date(dataItem.cycleStartDate);
-    //     let itemCycleEndDate = new Date(dataItem.cycleEndDate);
-    //     if (
-    //       itemCycleStartDate <= calendarDate &&
-    //       (!itemCycleEndDate || itemCycleEndDate >= calendarDate)
-    //     ) {
-    //       logger.debug("Considering day for inclusion: ", dataItem);
-    //       let daysSinceCycleStart = daysDiff(calendarDate, itemCycleStartDate);
-    //       logger.debug("Days since cycle start: " + daysSinceCycleStart);
-    //       let daysIntoCycle = daysSinceCycleStart % dataItem.cycleDays;
-    //       if (dataItem.mealCycleDay == daysIntoCycle) {
-    //         logger.debug(
-    //           `Calendar Date: ${calendarDate.toISOString()} Days Into Cycle: ${daysIntoCycle} Data Item: `,
-    //           dataItem
-    //         );
-    //         dataItem.calendarDate = calendarDate;
-    //         dateResult.push(dataItem);
-    //       }
-    //     }
-    //   });
-    //   result[formattedDate(calendarDate)] = dateResult;
-    // }
-
     // console.log("Result: ", result);
     res.send(result);
   });
