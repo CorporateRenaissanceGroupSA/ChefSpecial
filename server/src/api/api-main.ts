@@ -147,7 +147,7 @@ export function startApi(port: number = 4001) {
     logger.api('Received request to "/calendar-meals" api endpoint');
     let reqData = req.body;
     logger.api("Req Data: ", reqData);
-    const requiredFields: string[] = ["startDate", "endDate"];
+    const requiredFields: string[] = ["hospitalId", "startDate", "endDate"];
     let requiredFieldMissing = checkRequiredFields(reqData, requiredFields);
     if (requiredFieldMissing) {
       res
@@ -189,6 +189,7 @@ export function startApi(port: number = 4001) {
     LEFT JOIN dbo.menuMeal as MT ON MT.Id = CI.mealTypeId
     LEFT JOIN Ems.CSMeal as M ON M.Id = CI.mealId
     WHERE 
+    C.hospitalId = ${reqData.hospitalId} AND
     C.StartDate <= '${endDate}' AND 
     (C.endDate IS NULL OR C.endDate >= '${startDate}') 
     AND C.isActive = 'true' AND CI.isActive = 'true'
