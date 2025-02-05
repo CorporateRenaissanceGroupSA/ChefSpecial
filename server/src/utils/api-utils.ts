@@ -15,7 +15,12 @@ export class FieldInfo {
 }
 
 export function formattedDate(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  let newMonth = date.getMonth() + 1;
+  let newMonthStr = newMonth <= 9 ? "0" + newMonth : "" + newMonth;
+  let newDay = date.getDate();
+  let newDayStr = newDay <= 9 ? "0" + newDay : "" + newDay;
+
+  return `${date.getFullYear()}-${newMonthStr}-${newDayStr}`;
 }
 
 export function checkDates(obj: any, fields: FieldInfo[]) {

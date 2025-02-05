@@ -12,7 +12,7 @@ import {
   safeQuery,
 } from "../utils/api-utils";
 
-export function startApi(port: number = 4001) {
+export function startApi(port: number = 4000) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -223,7 +223,7 @@ export function startApi(port: number = 4001) {
           itemCycleStartDate <= calendarDate &&
           (!itemCycleEndDate || itemCycleEndDate >= calendarDate)
         ) {
-          logger.debug("Considering day for inclusion: ", dataItem);
+          // logger.debug("Considering day for inclusion: ", dataItem);
           let daysSinceCycleStart = daysDiff(
             new Date(calendarDate),
             new Date(itemCycleStartDate)
@@ -232,12 +232,12 @@ export function startApi(port: number = 4001) {
           let daysIntoCycle = daysSinceCycleStart % dataItem.cycleDays;
           logger.debug("Days into cycle: " + daysIntoCycle);
           if (dataItem.mealCycleDay == daysIntoCycle) {
+            dataItem.calendarDate = calendarDate;
             logger.debug(
               `Calendar Date: ${calendarDate} Days Into Cycle: ${daysIntoCycle} Data Item: `,
               dataItem
             );
-            dataItem.calendarDate = calendarDate;
-            dateResult.push(dataItem);
+            dateResult.push({ ...dataItem });
           }
         }
       });
