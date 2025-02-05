@@ -21,7 +21,7 @@ import { PlusCircleIcon } from "@heroicons/react/24/outline";
 // import { CycleData } from "../types";
 import { CycleData, Meal, MealDays, MealType, Option } from "../../../types";
 import { getCycleMealDays, mergeMealDay } from "../../../utils/db-utils";
-import * as Icon from "react-icons/fi";
+import * as Icon from "react-icons/pi";
 import CheckboxCustom from "react-custom-checkbox";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -289,10 +289,10 @@ const MealTable: React.FC<MealTableProps> = ({
                       className="mealTable-day"
                     >
                       <CheckboxCustom
-                        icon={<Icon.FiCheck color="#26ff00" size={15} />}
+                        icon={<Icon.PiCheckFatFill color="#1dc100" size={15} />}
                         checked={checked}
                         onChange={() => handleCheckboxChange(row, dayIndex)}
-                        borderColor="#D9D9D9"
+                        borderColor="#8c8c8c"
                         borderRadius={5}
                         style={{ boxShadow: "opx 1px 4px rgba(0, 0, 0, 0.16)" }}
                       />

@@ -3,12 +3,13 @@ import { AlertsTable } from "./AlertsTable";
 
 interface AlertsProps {
   hospitalId: number;
+  userId: number;
 }
 
-const Alerts: React.FC<AlertsProps> = (hospitalId) => {
+const Alerts: React.FC<AlertsProps> = ({hospitalId, userId}) => {
   return (
     <div>
-        <AlertsTable />
+      <AlertsTable hospitalId={hospitalId} userId={userId} />
     </div>
   );
 };

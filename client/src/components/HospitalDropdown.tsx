@@ -33,7 +33,8 @@ const inputFieldTheme = (theme: any) =>
         styleOverrides: {
           select: {
             paddingBottom: "2px",
-            paddingTop: "13px",
+            paddingTop: "11px",
+            fontSize: "14px"
           },
         },
       },

@@ -11,13 +11,14 @@ import {
   Button,
   tableCellClasses,
   TablePagination,
+  TextField,
 } from "@mui/material";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopTimePicker } from "@mui/x-date-pickers/DesktopTimePicker";
 import { MealType } from "../../types";
 import dayjs, { Dayjs } from "dayjs";
+import { mergeMealTypeOverride, getMealTypeList } from "../../utils/db-utils";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -38,66 +39,77 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 interface MealTimesProps {
   hospitalId: number;
-  mealTypes: MealType[];
+  // mealTypes: MealType[];
+  setMealTypes: React.Dispatch<React.SetStateAction<MealType[]>>;
 }
 
-const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, mealTypes }) => {
-  const [mealTimes, setMealTimes] = useState(mealTypes);
-  const [editedMealId, setEditedMealId] = useState<number | null>(null);
-  const [editedTime, setEditedTime] = useState<{ [key: number]: string }>({});
+const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, setMealTypes }) => {
+  const [localMealTypes, setLocalMealTypes] = useState<MealType[]>([]);
+  const [editedRow, setEditedRow] = useState<number | null>(null);
+  const [tempRowData, setTempRowData] = useState<{
+    [key: number]: { name: string; time: string };
+  }>({});
+  // const [editedMealId, setEditedMealId] = useState<number | null>(null);
+  // const [editedTime, setEditedTime] = useState<{ [key: number]: string }>({});
+  // const [editRowId, setEditRowId] = useState<number | null>(null);
 
   useEffect(() => {
-    console.log(mealTypes);
-  }, []);
+    if (hospitalId) {
+      console.log("updated hospitalId: ", hospitalId);
+
+      // Load meal types and meals
+      getMealTypeList(hospitalId).then((result) => {
+        setLocalMealTypes(result);
+        console.log("Meal Types updated for Meal Times: ", result);
+      });
+    }
+
+    // setCycleName(null);
+  }, [hospitalId]);
 
   const handleTimeChange = (id: number, newTime: Dayjs | null) => {
     if (!newTime) return;
 
-    setEditedMealId(id);
-    setEditedTime((prev) => ({
+    console.log(typeof newTime.format("HH:mm:ss"));
+    handleInputChange(id, "time", newTime.format("HH:mm:ss"));
+  };
+
+  const handleSaveRow = async (mealType: MealType) => {
+    if (!tempRowData[mealType.Id]) return;
+    const { name, time } = tempRowData[mealType.Id];
+    try {
+      await mergeMealTypeOverride(mealType.Id, hospitalId, name, time, true);
+      setLocalMealTypes((prev) =>
+        prev.map((m) =>
+          m.Id === mealType.Id
+            ? { ...m, name: name, mealTypeServedTime: time }
+            : m
+        )
+      );
+
+      setMealTypes((prev) =>
+        prev.map((m) =>
+          m.Id === mealType.Id ? { ...m, name: name, mealTypeServedTime: time } : m
+        )
+      )
+    } catch (error) {
+      console.error("Error updating meal type:", error);
+    }
+    setEditedRow(null);
+  };
+
+  const handleInputChange = (
+    id: number,
+    field: "name" | "time",
+    value: string
+  ) => {
+    setEditedRow(id);
+    setTempRowData((prev) => ({
       ...prev,
-      [id]: newTime.format("HH:mm:ss"),
+      [id]: { ...prev[id], [field]: value },
     }));
   };
 
-  const handleSaveRow = async (mealTypeId: number) => {
-    const newTime = editedTime[mealTypeId];
-
-    if (!newTime) return;
-
-    console.log(
-      `Saving mealId: ${mealTypeId}, New Time: ${newTime}, HospitalId: ${hospitalId}`
-    );
-
-
-    //    try {
-        //  const response = await fetch("/api/updateMealTime", {
-        //    method: "POST",
-        //    headers: { "Content-Type": "application/json" },
-        //    body: JSON.stringify({ mealId, mealTypeTime: newTime, hospitalId }),
-        //  });
-
-        //  if (!response.ok) throw new Error("Failed to save");
-
-         // Update the meal time in state
-         setMealTimes((prev) =>
-           prev.map((meal) =>
-             meal.Id === mealTypeId ? { ...meal, mealTypeTime: newTime } : meal
-           )
-         );
-
-         setEditedMealId(null); // Reset edited row
-         setEditedTime((prev) => {
-           const newState = { ...prev };
-           delete newState[mealTypeId]; // Remove saved edit from state
-           return newState;
-         });
-
-         console.log("Meal time updated successfully!");
-    //    } catch (error) {
-    //      console.error("Error updating meal time:", error);
-    //    }
-  };
   return (
     <div className="px-3">
       <Paper
@@ -115,43 +127,52 @@ const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, mealTypes }) => {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <StyledTableCell sx={{ fontFamily: "Poppins" }}>
-                  Meal
+                <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
+                  Meal Type
                 </StyledTableCell>
-                <StyledTableCell sx={{ fontFamily: "Poppins" }}>
-                  Cut Off Time
+                <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
+                  Served Time
                 </StyledTableCell>
-                <StyledTableCell sx={{ fontFamily: "Poppins" }}>
+                <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
                   Action
                 </StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {mealTimes.map((meal) => (
-                <StyledTableRow key={meal.Id}>
-                  <StyledTableCell>{meal.name}</StyledTableCell>
+              {localMealTypes.map((mt) => (
+                <StyledTableRow key={mt.Id}>
+                  <StyledTableCell>
+                    <TextField
+                      name="mealType"
+                      value={tempRowData[mt.Id]?.name || mt.name}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      onChange={(e) =>
+                        handleInputChange(mt.Id, "name", e.target.value)
+                      }
+                    />
+                  </StyledTableCell>
                   <StyledTableCell>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DesktopTimePicker
                         className="dateInput"
                         value={dayjs(
                           `2022-04-17T${
-                            editedTime[meal.Id] || meal.mealTypeTime
+                            tempRowData[mt.Id]?.time || mt.mealTypeServedTime
                           }`
                         )}
-                        onChange={(newTime) =>
-                          handleTimeChange(meal.Id, newTime)
-                        }
+                        onChange={(newTime) => handleTimeChange(mt.Id, newTime)}
                       />
                     </LocalizationProvider>
                   </StyledTableCell>
                   <StyledTableCell>
-                    {editedMealId === meal.Id && (
+                    {editedRow === mt.Id && (
                       <Button
                         variant="contained"
                         size="small"
                         color="success"
-                        onClick={() => handleSaveRow(meal.Id)}
+                        onClick={() => handleSaveRow(mt)}
                       >
                         Save
                       </Button>

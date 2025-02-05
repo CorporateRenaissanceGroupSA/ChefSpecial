@@ -8,6 +8,7 @@ import {
   Served,
   Hospitals,
   CalendarMeals,
+  Notes
 } from "../types";
 
 // utility function to get a list of meals for a hospital
@@ -48,9 +49,9 @@ export async function getMealTypeList(hospitalId: number): Promise<MealType[]> {
     if (response.status === 200) {
       result = response.data.map((mealTypeData: any) => {
         return {
-          Id: mealTypeData.mealId,
-          name: mealTypeData.mealType,
-          mealTypeTime: mealTypeData.CutOffTime,
+          Id: mealTypeData.mealTypeId,
+          name: mealTypeData.mealTypeName,
+          mealTypeServedTime: mealTypeData.mealTypeServedTime,
         };
       });
     }
@@ -337,7 +338,7 @@ export async function mergeMealType(
   }
 }
 
-// utility function to get list of meal types
+// utility function to get list of hospitals
 export async function getHospitals(userId: number): Promise<Hospitals[]> {
   let result: Hospitals[] = [];
   try {
@@ -387,4 +388,79 @@ export async function getCalendarMeals(
   // let result = apiResult
   console.log("Calendar Meals result: ", apiResult);
   return apiResult.data;
+}
+
+// utility function to merge existing meal type info
+export async function mergeMealTypeOverride(
+  mealTypeId: number,
+  hospitalId: number,
+  name: string | null,
+  servedTime: string | null,
+  isActive: boolean
+): Promise<void> {
+  const mergeItemInput = {
+    mealTypeId,
+    hospitalId,
+    name,
+    servedTime,
+    isActive,
+  };
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/meal/mealtypeoverride-merge`,
+      mergeItemInput
+    );
+    console.log("Meal Type Override merge apiResult: ", apiResult);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+//utility to get list of notes for a specific hospital
+export async function getNotes(hospitalId: number): Promise<Notes[]> {
+  // try {
+    let apiResult = await axios.post(`${process.env.REACT_APP_API}/note/list`, {
+      hospitalId,
+    });
+    console.log("Notes list response: ", apiResult);
+
+    if (apiResult.status !== 200) {
+      console.error(
+        "Problem getting Notes list for hospital: " + hospitalId,
+        apiResult
+      );
+      return undefined;
+    }
+    console.log("Notes list result: ", apiResult);
+    return apiResult.data;
+}
+
+// utility to merge new/existing notes
+export async function mergeNotes(
+  Id: number,
+  hospitalId: number,
+  note: string,
+  startDate: string,
+  endDate: string | null,
+  createdBy: number,
+  isActive: boolean
+): Promise<void> {
+  const mergeItemInput = {
+    Id,
+    hospitalId,
+    note,
+    startDate,
+    endDate,
+    createdBy,
+    isActive,
+  };
+  try {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/note/merge`,
+      mergeItemInput
+    );
+    console.log("Note merge apiResult: ", apiResult);
+  } catch (error) {
+    console.error(error);
+  }
 }

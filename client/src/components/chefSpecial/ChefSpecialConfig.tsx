@@ -34,7 +34,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
   const [selectedMealTypes, setSelectedMealTypes] = useState<number[]>([
     1, 2, 3,
   ]);
-  const [activeOnly, setActiveOnly] = useState(true); // Add state for the switch
+  const [activeOnly, setActiveOnly] = useState(false);
 
   useEffect(() => {
     if (hospitalId) {
@@ -128,7 +128,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
         description: "",
         mealTypeId: 0,
         mealTypes: [],
-        mealTypeTime: "",
+        mealTypeServedTime: "",
         servedId: 0,
         served: "",
         itemIsActive: true,

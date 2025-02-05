@@ -1,81 +1,115 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Dialog,
+  Modal,
   DialogActions,
   DialogContent,
   DialogTitle,
   Button,
+  Box,
 } from "@mui/material";
-import { EditorState, convertToRaw } from "draft-js";
+import {
+  EditorState,
+  convertToRaw,
+  ContentState,
+  convertFromRaw,
+} from "draft-js";
 import { Editor } from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import draftToHtml from "draftjs-to-html";
 
 interface WysiwygModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   setContent: (content: string) => void;
-} 
+  content: string;
+}
 
 const WysiwygModal: React.FC<WysiwygModalProps> = ({
   open,
   setOpen,
   setContent,
+  content,
 }) => {
-  const [editorState, setEditorState] = useState(
-    EditorState.createEmpty()
-  );
+
+  const initialEditorState = content
+    ? EditorState.createWithContent(convertFromRaw(JSON.parse(content)))
+    : EditorState.createEmpty();
+  const [editorState, setEditorState] = useState(initialEditorState);
+
+  useEffect(() => {
+    if (content) {
+      try {
+        const contentState = convertFromRaw(JSON.parse(content));
+        setEditorState(EditorState.createWithContent(contentState));
+      } catch (e) {
+        setEditorState(
+          EditorState.createWithContent(ContentState.createFromText(content))
+        );
+      }
+    }
+  }, [content]);
 
   const handleSave = () => {
-    const rawContentState = convertToRaw(editorState.getCurrentContent());
-    const text = rawContentState.blocks.map((block) => block.text).join("\n");
-    setContent(text);
+    //  const rawContent = convertToRaw(editorState.getCurrentContent());
+    //  const plainText = rawContent.blocks.map((block) => block.text).join("\n"); // Extract plain text
+    //  console.log(plainText);
+    //  setContent(plainText);
+    const rawContent = convertToRaw(editorState.getCurrentContent());
+
+    const markup = draftToHtml(rawContent);
+    console.log(markup);
+    setContent(markup); // Store as stringified JSON
+    setOpen(false);
+  };
+
+  const handleClose = () => {
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-      <DialogTitle>Edit Alert Note</DialogTitle>
-      <DialogContent>
-        <Editor
-          wrapperClassName="wysiwyg-wrapper"
-          editorClassName="wysiwyg-editor"
-          editorState={editorState}
-          onEditorStateChange={setEditorState}
-          toolbar={{
-            options: [
-              "inline",
-              "blockType",
-              "fontSize",
-              "list",
-              "textAlign",
-              "colorPicker",
-              "link",
-              "emoji",
-              "image",
-              "history",
-            ],
-            inline: {
-              options: ["bold", "italic", "underline", "strikethrough"],
-            },
-            list: { options: ["unordered", "ordered"] },
-            textAlign: { options: ["left", "center", "right", "justify"] },
-            colorPicker: {},
-            link: {},
-            emoji: {},
-            image: {},
-            history: { options: ["undo", "redo"] },
+    <>
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <Box
+          sx={{
+            width: 900,
+            bgcolor: "white",
+            p: 3,
+            margin: "auto",
+            marginTop: "10%",
           }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setOpen(false)} color="error">
-          Cancel
-        </Button>
-        <Button onClick={handleSave} variant="contained" color="success">
-          Save
-        </Button>
-      </DialogActions>
-    </Dialog>
+        >
+          <Editor
+            editorState={editorState}
+            wrapperClassName="wysiwyg-wrapper"
+            editorClassName="wysiwyg-editor"
+            onEditorStateChange={setEditorState}
+            toolbar={{
+              options: [
+                "inline",
+                "list",
+                "textAlign",
+                "link",
+              ],
+              inline: { inDropdown: false },
+              list: { inDropdown: true },
+              textAlign: { inDropdown: true },
+              colorPicker: {},
+              link: { inDropdown: true },
+              emoji: { inDropdown: false },
+              history: { options: ["undo", "redo"] },
+            }}
+          />
+          <DialogActions>
+            <Button onClick={() => setOpen(false)} color="error">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} variant="contained" color="success">
+              Save
+            </Button>
+          </DialogActions>
+        </Box>
+      </Modal>
+    </>
   );
 };
 
