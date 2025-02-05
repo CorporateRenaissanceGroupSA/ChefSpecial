@@ -8,6 +8,7 @@ export const createCSNoteTableQueryStr = `
     CREATE TABLE Ems.CSNote (
       Id int IDENTITY(1,1) PRIMARY KEY,
       hospitalId int not null REFERENCES dbo.Hospital(Id),
+      noteType varchar(50) not null,
       note text not null,
       startDate date not null,
       endDate date,

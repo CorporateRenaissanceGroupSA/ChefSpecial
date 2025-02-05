@@ -25,6 +25,10 @@ note.post("/list", async (req, res) => {
       .send("Required input field missing: " + requiredFieldMissing);
     return;
   }
+  let noteTypeQueryStr = "";
+  if (reqData.noteType) {
+    noteTypeQueryStr = `AND N.noteType = '${reqData.noteType}'`;
+  }
   let startDateQueryStr = "";
   if (reqData.startDate) {
     let startDate = cleanDate(reqData.startDate);
@@ -54,7 +58,7 @@ note.post("/list", async (req, res) => {
     FROM Ems.CSNote as N
     LEFT JOIN dbo.Hospital as H ON N.hospitalId = H.Id
     LEFT JOIN dbo.Users as U ON N.createdBy = U.Id
-    WHERE N.hospitalId = ${reqData.hospitalId} 
+    WHERE N.hospitalId = ${reqData.hospitalId} ${noteTypeQueryStr}
     ${startDateQueryStr} ${endDateQueryStr} ${isActiveQueryStr}
   `;
   let queryResult = await safeQuery(sql, mealQueryString);
@@ -77,6 +81,7 @@ note.post("/merge", async (req, res) => {
     new FieldInfo("Id", "id", true),
     new FieldInfo("hospitalId", "id", true),
     new FieldInfo("note", "other", true),
+    new FieldInfo("noteType", "other", true),
     new FieldInfo("startDate", "date", true),
     new FieldInfo("endDate", "date", false),
     new FieldInfo("createdBy", "number", true),
