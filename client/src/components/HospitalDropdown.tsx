@@ -1,12 +1,6 @@
 import React, { useEffect } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import {
-  FormControl,
-  MenuItem,
-  Select,
-  InputLabel,
-  SelectChangeEvent,
-} from "@mui/material";
+import { FormControl, MenuItem, Select, InputLabel } from "@mui/material";
 import { Hospitals } from "../types";
 
 const inputFieldTheme = (theme: any) =>
@@ -34,7 +28,7 @@ const inputFieldTheme = (theme: any) =>
           select: {
             paddingBottom: "2px",
             paddingTop: "11px",
-            fontSize: "14px"
+            fontSize: "14px",
           },
         },
       },
@@ -52,12 +46,6 @@ const HospitalDropdown: React.FC<HospitalDropdownProps> = ({
   hospitalId,
   setHospitalId,
 }) => {
-  // const handleChange = (event: SelectChangeEvent<unknown>) => {
-  //   const value = event.target.value as number;
-  //   setHospitalId(value);
-  //   console.log(typeof event.target.value);
-  // };
-
   return (
     <div>
       <ThemeProvider theme={inputFieldTheme}>
@@ -75,7 +63,11 @@ const HospitalDropdown: React.FC<HospitalDropdownProps> = ({
             fullWidth
             disableUnderline
             label="Hospital"
+            defaultValue={0}
           >
+            <MenuItem disabled value={0}>
+              <em>Select Hospital</em>
+            </MenuItem>
             {hospitals.map((option) => (
               <MenuItem key={option.Id} value={option.Id}>
                 {option.name}

@@ -18,6 +18,7 @@ interface cycleMealTypeProps {
   options: Option[];
   selected: number[];
   setSelected: (selected: number[]) => void;
+  hospitalId: number | null;
 }
 
 const CycleMealType: React.FC<cycleMealTypeProps> = ({
@@ -25,6 +26,7 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
   options,
   selected,
   setSelected,
+  hospitalId,
 }) => {
   console.log(options)
   const handleChange = (event: SelectChangeEvent<number[]>) => {
@@ -37,7 +39,7 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
   };
 
   return (
-    <FormControl variant="filled" fullWidth>
+    <FormControl variant="filled" fullWidth disabled={hospitalId? false : true}>
       <InputLabel
       >
         {label}

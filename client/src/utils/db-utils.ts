@@ -365,12 +365,14 @@ export async function getHospitals(userId: number): Promise<Hospitals[]> {
 
 // get meals list for calendar view
 export async function getCalendarMeals(
+  hospitalId: number,
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<CalendarMeals[]> {
   let apiResult = await axios.post(
     `${process.env.REACT_APP_API}/calendar-meals`,
     {
+      hospitalId,
       startDate,
       endDate,
     }
@@ -417,10 +419,11 @@ export async function mergeMealTypeOverride(
 }
 
 //utility to get list of notes for a specific hospital
-export async function getNotes(hospitalId: number): Promise<Notes[]> {
+export async function getNotes(hospitalId: number, noteType: string): Promise<Notes[]> {
   // try {
     let apiResult = await axios.post(`${process.env.REACT_APP_API}/note/list`, {
       hospitalId,
+      noteType,
     });
     console.log("Notes list response: ", apiResult);
 
@@ -443,7 +446,8 @@ export async function mergeNotes(
   startDate: string,
   endDate: string | null,
   createdBy: number,
-  isActive: boolean
+  isActive: boolean,
+  noteType: string,
 ): Promise<void> {
   const mergeItemInput = {
     Id,
@@ -453,6 +457,7 @@ export async function mergeNotes(
     endDate,
     createdBy,
     isActive,
+    noteType,
   };
   try {
     let apiResult = await axios.post(

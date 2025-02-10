@@ -71,3 +71,21 @@
 .wysiwyg-editor {
   height: 15rem !important;
 }
+
+.MuiTableCell-root {
+  font-family: "Poppins" !important;
+}
+
+.MuiToggleButton-root {
+  padding: 5px !important;
+}
+
+.MuiToggleButtonGroup-firstButton {
+  border-top-left-radius: 10px !important;
+  border-bottom-left-radius: 10px !important;
+}
+
+.MuiToggleButtonGroup-lastButton {
+  border-top-right-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
+}

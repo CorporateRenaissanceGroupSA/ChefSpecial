@@ -12,7 +12,7 @@ import {
   safeQuery,
 } from "../utils/api-utils";
 
-export function startApi(port: number = 4000) {
+export function startApi(port: number) {
   const app = express();
   app.use(cors());
   app.use(express.json());

@@ -6,6 +6,6 @@ export { MealItems } from "./ChefSpecialItems/MealItems";
 
 export { MealTimes } from "./MealTimes";
 
-export { Alerts } from "./Alerts"
+export { AlertsTable } from "./Alerts/AlertsTable"
 
 

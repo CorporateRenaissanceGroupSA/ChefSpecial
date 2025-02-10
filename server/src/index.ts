@@ -9,5 +9,5 @@ main();
 async function main() {
   logger.info("Hello template!");
   sql = await connectDb();
-  startApi(4000);
+  startApi(Number(process.env.API_PORT));
 }

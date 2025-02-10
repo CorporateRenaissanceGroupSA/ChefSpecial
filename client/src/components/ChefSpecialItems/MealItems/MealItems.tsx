@@ -76,7 +76,7 @@ const MealItems: React.FC<MealItemsProps> = ({
   mealTypes,
   setAllMeals,
 }) => {
-  // const [hospitalId, setHospitalId] = useState<number>(1);
+
   const [allLocalMeals, setAllLocalMeals] = useState<Meal[]>(allMeals);
   const [servedOptions, setServedOptions] = useState<Served[]>([]);
   const [checked, setChecked] = React.useState(true);
@@ -91,9 +91,17 @@ const MealItems: React.FC<MealItemsProps> = ({
   const [changedMealTypes, setChangedMealTypes] = useState<
     Record<number, number[]>
   >({});
+  // const [previousMealTypes, setPreviousMealTypes] = useState<{
+  //   [mealId: number]: number[];
+  // }>({});
+
   const [previousMealTypes, setPreviousMealTypes] = useState<{
-    [mealId: number]: number[];
-  }>({});
+     [mealId: number]: number[];
+   }>(() => {
+    // Load from localStorage on mount
+    const storedData = localStorage.getItem("previousMealTypes");
+    return storedData ? JSON.parse(storedData) : [];
+  });
 
   useEffect(() => {
     const fetchMealsAndServedOptions = async () => {
@@ -107,7 +115,7 @@ const MealItems: React.FC<MealItemsProps> = ({
         // Fetch served options
         const servedList = await getServedList();
 
-        // Exclude the item with Id 3 (Placeholder)
+        // Exclude the item with Id 3 - Placeholder
         const filteredServedList = servedList.filter(
           (option) => option.Id !== 3
         );
@@ -131,6 +139,15 @@ const MealItems: React.FC<MealItemsProps> = ({
     }));
     setAllLocalMeals(normalizedMeals);
   }, [allLocalMeals]);
+
+
+  useEffect(() => {
+    // Save to localStorage whenever it changes
+    localStorage.setItem(
+      "previousMealTypes",
+      JSON.stringify(previousMealTypes)
+    );
+  }, [previousMealTypes]);
 
   const handleInputChange = (
     mealId: number,
@@ -296,7 +313,8 @@ const MealItems: React.FC<MealItemsProps> = ({
                   ...meal,
                   ...dataToUpdate,
                   isActive: tempRowData.isActive,
-                  mealTypes: changedMealTypes[mealId] || meal.mealTypes,
+                  // mealTypes: changedMealTypes[mealId] || meal.mealTypes,
+                  mealTypes: selectedTypes,
                 }
               : meal
           )
@@ -308,7 +326,8 @@ const MealItems: React.FC<MealItemsProps> = ({
               ? {
                   ...meal,
                   isActive: tempRowData.isActive,
-                  mealTypes: changedMealTypes[mealId] || meal.mealTypes,
+                  // mealTypes: changedMealTypes[mealId] || meal.mealTypes,
+                  mealTypes: selectedTypes,
                 }
               : meal
           )
@@ -328,16 +347,6 @@ const MealItems: React.FC<MealItemsProps> = ({
       }
     }
   };
-
-  // // // Synchronize previousMealTypes when navigating between tabs
-  // useEffect(() => {
-  //   if (editRowId && changedMealTypes[editRowId]) {
-  //     setPreviousMealTypes((prev) => ({
-  //       ...prev,
-  //       [editRowId]: changedMealTypes[editRowId],
-  //     }));
-  //   }
-  // }, [editRowId, changedMealTypes]);
 
   // Toggle the visibility of inactive rows
   const toggleShowInactive = () => setShowInactive((prev) => !prev);
@@ -377,6 +386,7 @@ const MealItems: React.FC<MealItemsProps> = ({
       setEditRowId(mealId);
     }
   };
+
 
   const toggleMealStatus = (mealId: number) => {
     setAllLocalMeals((prevMeals) =>
