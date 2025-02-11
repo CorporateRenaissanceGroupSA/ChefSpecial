@@ -262,6 +262,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
             label={`${activeOnly ? "Show" : "Hide"} Inactive Cycles`}
             control={
               <Switch
+                disabled={hospitalId ? false : true}
                 checked={!activeOnly} // Inverse because `activeOnly` implies hiding inactive
                 onChange={(e) => handleToggle(e.target.checked)} // Update state on toggle
               />
@@ -299,6 +300,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
               options={mealTypes}
               selected={selectedMealTypes}
               setSelected={setSelectedMealTypes}
+              hospitalId={hospitalId}
             />
           </ThemeProvider>
         </div>
@@ -306,18 +308,19 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
         <div className="col-span-2 flex justify-end">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  defaultValue={dayjs(
-                    currentCycle?.startDate || new Date().toJSON()
-                  )}
-                  value={startDate}
-                  onChange={(date: Dayjs | null) => {
-                    setStartDate(date);
-                    handleInputChange("startDate", date ? date.toJSON() : "");
-                  }}
-                  label="Cycle Start Date"
-                  format="DD/MM/YYYY"
-                />
+              <DatePicker
+                disabled={hospitalId ? false : true}
+                defaultValue={dayjs(
+                  currentCycle?.startDate || new Date().toJSON()
+                )}
+                value={startDate}
+                onChange={(date: Dayjs | null) => {
+                  setStartDate(date);
+                  handleInputChange("startDate", date ? date.toJSON() : "");
+                }}
+                label="Cycle Start Date"
+                format="DD/MM/YYYY"
+              />
             </LocalizationProvider>
           </ThemeProvider>
         </div>
@@ -325,21 +328,22 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
         <div className="col-span-2">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  onChange={(date: Dayjs | null) => {
-                    setEndDate(date);
-                    handleInputChange(
-                      "endDate",
-                      date ? date.startOf("day").toISOString() : ""
-                    );
-                  }}
-                  value={endDate}
-                  slotProps={{
-                    field: { clearable: true, onClear: () => setCleared(true) },
-                  }}
-                  label="Cycle End Date"
-                  format="DD/MM/YYYY"
-                />
+              <DatePicker
+                disabled={hospitalId ? false : true}
+                onChange={(date: Dayjs | null) => {
+                  setEndDate(date);
+                  handleInputChange(
+                    "endDate",
+                    date ? date.startOf("day").toISOString() : ""
+                  );
+                }}
+                value={endDate}
+                slotProps={{
+                  field: { clearable: true, onClear: () => setCleared(true) },
+                }}
+                label="Cycle End Date"
+                format="DD/MM/YYYY"
+              />
             </LocalizationProvider>
           </ThemeProvider>
         </div>
@@ -351,6 +355,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
               label="Days in Cycle"
               type="number"
               variant="filled"
+              disabled={hospitalId ? false : true}
               onChange={(e) =>
                 handleInputChange(
                   "cycleDays",
@@ -368,6 +373,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                 "& .MuiFilledInput-root": {
                   "&:before": {
                     borderBottom: "none", // Remove default border
+                    borderBottomStyle: "none",
                   },
                   "&:after": {
                     borderBottom: "none", // Remove focused border
@@ -389,6 +395,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
 
         <div className="flex justify-center items-center">
           <Button
+            disabled={hospitalId ? false : true}
             onClick={toggleWeeklyView}
             sx={{
               minWidth: "24px",

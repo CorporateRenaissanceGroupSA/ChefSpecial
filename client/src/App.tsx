@@ -6,12 +6,18 @@ import {
   MealItems,
   WeeklyView,
   MealTimes,
-  Alerts,
+  AlertsTable,
 } from "./Components";
 // import MealItems from "./Components/ChefSpecialItems/MealItems/MealItems";
-import { getHospitals, getMealTypeList, getMealsList, getCalendarMeals } from "./utils/db-utils";
+import {
+  getHospitals,
+  getMealTypeList,
+  getMealsList,
+  getCalendarMeals,
+} from "./utils/db-utils";
 import { Hospitals, Meal, MealType, MealDays, CalendarMeals } from "./types";
 import HospitalDropdown from "./Components/HospitalDropdown";
+import NoHospital  from "./Components/NoHospital";
 import { each } from "lodash";
 import "../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 
@@ -23,8 +29,6 @@ const App: React.FC = () => {
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [userId, setUserId] = useState<number>(81);
   const [showWeeklyView, setShowWeeklyView] = useState(false);
-  // const [calendarDate, setCalendarDate] = useState(new Date());
-  // const [calendarMeals, setCalendarMeals] = useState<CalendarMeals>({});
 
   const iframeUrl = window.location.href;
 
@@ -64,45 +68,7 @@ const App: React.FC = () => {
         console.log("All meals updated.", result);
       });
     }
-
-    // setCycleName(null);
   }, [hospitalId]);
-
-  // Fetch Meals for the Week
-  // useEffect(() => {
-  //   console.log(calendarDate);
-  //   const startDate = new Date(calendarDate.getFullYear(), 0, 1)
-  //     .toISOString()
-  //     .split("T")[0];
-  //   const endDate = new Date(calendarDate.getFullYear(), 3, 31)
-  //     .toISOString()
-  //     .split("T")[0];
-
-  //   console.log(startDate, endDate);
-
-  //   getCalendarMeals(startDate, endDate)
-  //     .then((data) => {
-  //       console.log("Raw API data:", data);
-  //       if (typeof data === "object") {
-  //         // Ensure only valid meal entries are included
-  //         const filteredMeals: CalendarMeals = Object.entries(data).reduce(
-  //           (acc, [date, meal]) => {
-  //             if (Array.isArray(meal) && meal.length > 0) {
-  //               acc[date] = meal;
-  //             }
-  //             return acc;
-  //           },
-  //           {} as CalendarMeals
-  //         );
-  //         console.log("Filtered Meals:", filteredMeals);
-  //         setCalendarMeals(filteredMeals);
-  //       } else {
-  //         console.error("Unexpected API response:", data);
-  //         setCalendarMeals({});
-  //       }
-  //     })
-  //     .catch((error) => console.error("Error fetching meals:", error));
-  // }, [calendarDate]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -111,6 +77,14 @@ const App: React.FC = () => {
   useEffect(() => {
     console.log("allMeals updated", allMeals);
   }, [allMeals]);
+
+  // Map tabIndex to noteType
+  const getNoteType = (tabIndex: number): string | null => {
+    console.log(tabIndex);
+    if (tabIndex === 3) return "Staff";
+    if (tabIndex === 4) return "Patient";
+    return null;
+  };
 
   const toggleWeeklyView = () => {
     setShowWeeklyView((prev) => !prev); // Toggle between WeeklyView and ChefSpecialConfig
@@ -131,8 +105,13 @@ const App: React.FC = () => {
         />
       </Tabs>
       {selectedTab === 0 &&
-        (showWeeklyView ? (
-          <WeeklyView />
+        (hospitalId === null ? (
+          <NoHospital />
+        ) : showWeeklyView ? (
+          <WeeklyView
+            hospitalId={hospitalId}
+            toggleWeeklyView={toggleWeeklyView}
+          />
         ) : (
           <ChefSpecialConfig
             key={selectedTab}
@@ -144,26 +123,46 @@ const App: React.FC = () => {
           />
         ))}
 
-      {selectedTab === 1 && (
-        <MealItems
-          allMeals={allMeals}
-          setAllMeals={setAllMeals}
-          mealTypes={mealTypes}
-          hospitalId={hospitalId}
-        />
-      )}
+      {selectedTab === 1 &&
+        (hospitalId === null ? (
+          <NoHospital />
+        ) : (
+          <MealItems
+            allMeals={allMeals}
+            setAllMeals={setAllMeals}
+            mealTypes={mealTypes}
+            hospitalId={hospitalId}
+          />
+        ))}
 
-      {selectedTab === 2 && (
-        <MealTimes hospitalId={hospitalId} setMealTypes={setMealTypes} />
-      )}
+      {selectedTab === 2 &&
+        (hospitalId === null ? (
+          <NoHospital />
+        ) : (
+          <MealTimes hospitalId={hospitalId} setMealTypes={setMealTypes} />
+        ))}
 
-      {selectedTab === 3 && <Alerts hospitalId={hospitalId} userId={userId} />}
+      {selectedTab === 3 &&
+        (hospitalId === null ? (
+          <NoHospital />
+        ) : (
+          <AlertsTable
+            hospitalId={hospitalId}
+            userId={userId}
+            noteType={getNoteType(selectedTab)!}
+          />
+        ))}
 
-      {selectedTab === 4 && (
-        <div>
-          <h2>Patient Notifications</h2>
-        </div>
-      )}
+      {selectedTab === 4 &&
+        (hospitalId === null ? (
+          <NoHospital />
+        ) : (
+          <AlertsTable
+            hospitalId={hospitalId}
+            userId={userId}
+            noteType={getNoteType(selectedTab)!}
+          />
+        ))}
     </div>
   );
 };

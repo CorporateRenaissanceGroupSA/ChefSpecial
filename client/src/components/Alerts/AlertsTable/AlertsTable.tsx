@@ -58,9 +58,10 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 interface AlertsTableProps {
   hospitalId: number;
   userId: number;
+  noteType: string;
 }
 
-const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
+const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType }) => {
   const [notes, setNotes] = useState<Notes[]>([]);
   const [localNotes, setLocalNotes] = useState<Record<number | null, Notes>>(
     {}
@@ -71,9 +72,10 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
 
   useEffect(() => {
     if (hospitalId) {
+      console.log(noteType);
       const fetchNotes = async () => {
         try {
-          const fetchedNotes = await getNotes(hospitalId);
+          const fetchedNotes = await getNotes(hospitalId, noteType);
           if (fetchedNotes) {
             setNotes(fetchedNotes);
           }
@@ -85,7 +87,7 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
     }
 
     // setCycleName(null);
-  }, [hospitalId]);
+  }, [hospitalId, noteType]);
 
   const handleAddRow = () => {
     const newNote: Notes = {
@@ -96,18 +98,9 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
       endDate: null,
       createdBy: userId,
       isActive: true,
+      noteType: noteType,
     };
     setNotes([...notes, newNote]);
-    // setRows([
-    //   ...rows,
-    //   {
-    //     id: null,
-    //     text: "",
-    //     startDate: null,
-    //     endDate: null,
-    //     active: true,
-    //   },
-    // ]);
   };
 
   const handleInputChange = (
@@ -138,12 +131,13 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
         note.startDate ? dayjs(note.startDate).format("YYYY-MM-DD") : "",
         note.endDate ? dayjs(note.endDate).format("YYYY-MM-DD") : null,
         userId,
-        note.isActive
+        note.isActive,
+        note.noteType,
       );
       console.log("Note saved successfully");
 
       // Refresh notes after saving
-      const updatedNotes = await getNotes(hospitalId);
+      const updatedNotes = await getNotes(hospitalId, noteType);
       setNotes(updatedNotes || []);
     } catch (error) {
       console.error("Error saving note:", error);
@@ -225,24 +219,24 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId }) => {
 
                         // setEditorContent(editorState); // Pass editorState to modal
 
+                        if (note.note) {
+                          // Convert stored HTML back to DraftJS content state
+                          const blocksFromHTML = convertFromHTML(note.note);
+                          const contentState =
+                            ContentState.createFromBlockArray(
+                              blocksFromHTML.contentBlocks,
+                              blocksFromHTML.entityMap
+                            );
 
-                      if (note.note) {
-                        // Convert stored HTML back to DraftJS content state
-                        const blocksFromHTML = convertFromHTML(note.note);
-                        const contentState = ContentState.createFromBlockArray(
-                          blocksFromHTML.contentBlocks,
-                          blocksFromHTML.entityMap
-                        );
+                          // Convert content to raw JSON string
+                          const rawContent = JSON.stringify(
+                            convertToRaw(contentState)
+                          );
 
-                        // Convert content to raw JSON string
-                        const rawContent = JSON.stringify(
-                          convertToRaw(contentState)
-                        );
-
-                        setEditorContent(rawContent); // Store as a string
-                      } else {
-                        setEditorContent(""); // Handle empty case
-                      }
+                          setEditorContent(rawContent); // Store as a string
+                        } else {
+                          setEditorContent(""); // Handle empty case
+                        }
                       }}
                       style={{
                         width: "100%",

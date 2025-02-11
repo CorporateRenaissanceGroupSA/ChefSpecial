@@ -72,7 +72,7 @@ export interface MealEntry {
   cycleId: number;
   mealId: number;
   hospitalId: number;
-  mealTypeId: string;
+  mealTypeId: number;
   mealTypeName: string;
   mealName: string;
   cycleName: string;
@@ -97,4 +97,5 @@ export interface Notes {
   endDate: string;
   createdBy: number;
   isActive: boolean;
+  noteType: string;
 }
