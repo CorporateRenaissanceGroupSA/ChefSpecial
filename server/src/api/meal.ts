@@ -306,11 +306,11 @@ meal.post("/mealtypes", async (req, res) => {
     onlyActive = reqData.onlyActive;
   }
   let queryString = `
-    SELECT DISTINCT(CI.mealTypeid), IIF(MO.name IS NOT NULL,MO.name, MT.mealName) as mealTypeName, CI.cycleId, C.name as cycleName
+    SELECT DISTINCT(CI.mealTypeid), COALESCE(MO.name, MT.mealName) as mealTypeName, CI.cycleId, C.name as cycleName
     FROM Ems.CSCycleItem as CI
     LEFT JOIN Ems.CSCycle as C ON C.Id = CI.cycleId
     LEFT JOIN dbo.menuMeal as MT ON MT.Id = CI.mealTypeId
-    LEFT JOIN Ems.CSMealTypeOverride as MO ON MO.mealTypeId = CI.mealTypeId
+    LEFT JOIN Ems.CSMealTypeOverride as MO ON MO.mealTypeId = CI.mealTypeId AND MO.hospitalId = C.hospitalId
     WHERE C.hospitalId = ${reqData.hospitalId} AND CI.mealId = ${reqData.mealId} ${onlyActive ? "AND CI.isActive = 'true'" : ""}
   `;
   let queryResult = await safeQuery(sql, queryString);
