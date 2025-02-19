@@ -8,7 +8,8 @@ import {
   Served,
   Hospitals,
   CalendarMeals,
-  Notes
+  Notes,
+  MealTypes,
 } from "../types";
 
 // utility function to get a list of meals for a hospital
@@ -52,6 +53,7 @@ export async function getMealTypeList(hospitalId: number): Promise<MealType[]> {
           Id: mealTypeData.mealTypeId,
           name: mealTypeData.mealTypeName,
           mealTypeServedTime: mealTypeData.mealTypeServedTime,
+          mealTypeNameGlobal: mealTypeData.mealTypeNameGlobal,
         };
       });
     }
@@ -418,9 +420,8 @@ export async function mergeMealTypeOverride(
   }
 }
 
-//utility to get list of notes for a specific hospital
+// utility to get list of notes for a specific hospital
 export async function getNotes(hospitalId: number, noteType: string): Promise<Notes[]> {
-  // try {
     let apiResult = await axios.post(`${process.env.REACT_APP_API}/note/list`, {
       hospitalId,
       noteType,
@@ -468,4 +469,26 @@ export async function mergeNotes(
   } catch (error) {
     console.error(error);
   }
+}
+
+// utility to get list of mealTypes connected to a meal for a specific hospital
+export async function getMealTypes(hospitalId: number, mealId: number): Promise<MealTypes[]> {
+    let apiResult = await axios.post(
+      `${process.env.REACT_APP_API}/meal/mealtypes`,
+      {
+        hospitalId,
+        mealId,
+      }
+    );
+    console.log("meal types response: ", apiResult);
+
+    if (apiResult.status !== 200) {
+      console.error(
+        "Problem getting meal types for hospital: " + hospitalId,
+        apiResult
+      );
+      return undefined;
+    }
+    console.log("meal types result: ", apiResult);
+    return apiResult.data.mealTypes;
 }

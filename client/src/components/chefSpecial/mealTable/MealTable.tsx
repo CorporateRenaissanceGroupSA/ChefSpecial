@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
+import MealDropdown from "../CycleDetails/MealDropdown/MealDropdown";
+import { CycleData, Meal, MealDays, MealType } from "../../../types";
+import { getCycleMealDays, mergeMealDay } from "../../../utils/db-utils";
 import {
   TableContainer,
   Table,
@@ -8,43 +11,12 @@ import {
   TableHead,
   Paper,
   TableCell,
-  Typography,
-  Checkbox,
   Button,
   tableCellClasses,
-  checkboxClasses,
 } from "@mui/material";
-
-import MealDropdown from "../CycleDetails/MealDropdown/MealDropdown";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
-// import { Option } from "../types";
-// import { CycleData } from "../types";
-import { CycleData, Meal, MealDays, MealType, Option } from "../../../types";
-import { getCycleMealDays, mergeMealDay } from "../../../utils/db-utils";
-import * as Icon from "react-icons/pi";
+import * as Icon from "react-icons/fa";
 import CheckboxCustom from "react-custom-checkbox";
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: "#F6F6F6",
-    color: "#656565",
-    borderBottom: "none",
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "& td": {
-    borderBottom: `1px solid #F1F1F1`,
-  },
-}));
-
-// interface Meal {
-//   name: string;
-//   days: boolean[];
-// }
 
 interface MealTableProps {
   cycle: CycleData;
@@ -97,7 +69,6 @@ const MealTable: React.FC<MealTableProps> = ({
 
   // load all the meals and active days for the currently selected cycle and place the data into rows
   useEffect(() => {
-    console.log(cycle.Id);
     getCycleMealDays(cycle.Id, cycle.cycleDays, mealType.Id).then((result) => {
       if (result && result.mealDaysList) {
         let validMealDaysList = result.mealDaysList.filter(
@@ -114,7 +85,6 @@ const MealTable: React.FC<MealTableProps> = ({
 
   // Update row data when daysInCycle changes
   useEffect(() => {
-    // TODO check with user whether they are sure to lose data when days are reduced or show error that days that are active cannot be deleted.
     setRows((prevRows) =>
       prevRows.map((row) => ({
         ...row,
@@ -125,7 +95,6 @@ const MealTable: React.FC<MealTableProps> = ({
 
   // function to add a new row to the cycle
   const handleAddRow = () => {
-    console.log("Add row handler called.");
     setRows((prevRows) => [
       ...prevRows,
       {
@@ -289,10 +258,10 @@ const MealTable: React.FC<MealTableProps> = ({
                       className="mealTable-day"
                     >
                       <CheckboxCustom
-                        icon={<Icon.PiCheckFatFill color="#1dc100" size={15} />}
+                        icon={<Icon.FaCheck color="#1dc100" size={13} />}
                         checked={checked}
                         onChange={() => handleCheckboxChange(row, dayIndex)}
-                        borderColor="#8c8c8c"
+                        borderColor={checked ? "#a7a7a7" : "#e4e4e4"}
                         borderRadius={5}
                         style={{ boxShadow: "opx 1px 4px rgba(0, 0, 0, 0.16)" }}
                       />
@@ -307,5 +276,22 @@ const MealTable: React.FC<MealTableProps> = ({
     </div>
   );
 };
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: "#F6F6F6",
+    color: "#656565",
+    borderBottom: "none",
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "& td": {
+    borderBottom: `1px solid #F1F1F1`,
+  },
+}));
 
 export default MealTable;

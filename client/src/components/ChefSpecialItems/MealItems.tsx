@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
+import {
+  getMealsList,
+  getServedList,
+  mergeMeal,
+  getCycleMeals,
+  mergeMealType,
+  getMealTypes,
+} from "../../utils/db-utils";
+import { Meal, MealType, Served } from "../../types";
+import { Message } from "../Global/Message";
+import { CustomButton } from "../Global/CustomButton";
+import connectedCyclesImage from "../Assets/connectedCycles1.png";
+import noDataImage from "../Assets/noData.png";
 import {
   TableContainer,
   Table,
@@ -8,7 +21,6 @@ import {
   TableHead,
   Paper,
   TableCell,
-  Typography,
   Button,
   tableCellClasses,
   TextField,
@@ -19,39 +31,17 @@ import {
   Modal,
   Box,
   Chip,
+  List,
+  ListItem,
+  ListItemIcon,
 } from "@mui/material";
-import {
-  getMealsList,
-  getServedList,
-  getMealTypeList,
-  mergeMeal,
-  getCycleMeals,
-  mergeMealType,
-} from "../../../utils/db-utils";
-import { CycleData, Meal, MealDays, MealType, Served } from "../../../types";
 import _ from "lodash";
 import {
   EyeIcon,
   EyeSlashIcon,
   PlusCircleIcon,
 } from "@heroicons/react/24/outline";
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: "#F6F6F6",
-    color: "#656565",
-    borderBottom: "none",
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "& td": {
-    borderBottom: "1px solid #F1F1F1",
-  },
-}));
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 interface MealItemsProps {
   hospitalId: number;
@@ -60,23 +50,12 @@ interface MealItemsProps {
   setAllMeals: React.Dispatch<React.SetStateAction<Meal[]>>;
 }
 
-interface RowData {
-  rowId: number;
-  mealId: number;
-  mealName: string;
-  mealDescription: string;
-  mealTypeId: number;
-  mealTypes: string;
-  mealServedId: number;
-}
-
 const MealItems: React.FC<MealItemsProps> = ({
   hospitalId,
   allMeals,
   mealTypes,
   setAllMeals,
 }) => {
-
   const [allLocalMeals, setAllLocalMeals] = useState<Meal[]>(allMeals);
   const [servedOptions, setServedOptions] = useState<Served[]>([]);
   const [checked, setChecked] = React.useState(true);
@@ -91,13 +70,9 @@ const MealItems: React.FC<MealItemsProps> = ({
   const [changedMealTypes, setChangedMealTypes] = useState<
     Record<number, number[]>
   >({});
-  // const [previousMealTypes, setPreviousMealTypes] = useState<{
-  //   [mealId: number]: number[];
-  // }>({});
-
   const [previousMealTypes, setPreviousMealTypes] = useState<{
-     [mealId: number]: number[];
-   }>(() => {
+    [mealId: number]: number[];
+  }>(() => {
     // Load from localStorage on mount
     const storedData = localStorage.getItem("previousMealTypes");
     return storedData ? JSON.parse(storedData) : [];
@@ -108,7 +83,6 @@ const MealItems: React.FC<MealItemsProps> = ({
       try {
         // Fetch the updated meals list
         const updatedMeals = await getMealsList(hospitalId);
-        console.log(updatedMeals);
 
         setAllLocalMeals(updatedMeals);
 
@@ -140,7 +114,6 @@ const MealItems: React.FC<MealItemsProps> = ({
     setAllLocalMeals(normalizedMeals);
   }, [allLocalMeals]);
 
-
   useEffect(() => {
     // Save to localStorage whenever it changes
     localStorage.setItem(
@@ -149,7 +122,7 @@ const MealItems: React.FC<MealItemsProps> = ({
     );
   }, [previousMealTypes]);
 
-  const handleInputChange = (
+  const handleInputChange = async (
     mealId: number,
     field: keyof Meal,
     value: string | number | boolean | number[]
@@ -187,15 +160,9 @@ const MealItems: React.FC<MealItemsProps> = ({
       mealTypes: [],
       isActive: true,
     };
-    console.log(newMeal);
     setAllLocalMeals((prevMeals) => [...prevMeals, newMeal]);
     setEditRowId(newMeal.Id);
     setTempRowData(newMeal);
-  };
-
-  // function to toggle item to be active/inactive
-  const handleActiveChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
   };
 
   const handleSaveRow = async (mealId: number) => {
@@ -262,8 +229,8 @@ const MealItems: React.FC<MealItemsProps> = ({
         const previousTypes = previousMealTypes[mealId] || [];
         const selectedTypes = changedMealTypes[mealId] || [];
 
-        console.log("prev types: ", previousTypes)
-        console.log("select types: ", selectedTypes)
+        console.log("prev types: ", previousTypes);
+        console.log("select types: ", selectedTypes);
 
         const addedTypes = selectedTypes.filter(
           (type) => !previousTypes.includes(type)
@@ -290,21 +257,6 @@ const MealItems: React.FC<MealItemsProps> = ({
           [mealId]: selectedTypes,
         }));
 
-        // // Save updated meal types if changed
-        // if (changedMealTypes[mealId]?.length) {
-        //   const selectedMealTypes = changedMealTypes[mealId];
-        //   console.log(selectedMealTypes);
-
-        //   for (const mealTypeId of selectedMealTypes) {
-        //     await mergeMealType(mealId, mealTypeId, true);
-        //     console.log("Meal type updated:", mealTypeId);
-        //   }
-        // }
-
-        // Update previousMealTypes after saving
-        // setPreviousMealTypes(changedMealTypes);
-        // setChangedMealTypes({}); // Clear changed states
-
         // Update local state for the existing meal
         setAllLocalMeals((prevMeals) =>
           prevMeals.map((meal) =>
@@ -313,8 +265,7 @@ const MealItems: React.FC<MealItemsProps> = ({
                   ...meal,
                   ...dataToUpdate,
                   isActive: tempRowData.isActive,
-                  // mealTypes: changedMealTypes[mealId] || meal.mealTypes,
-                  mealTypes: selectedTypes,
+                  mealTypes: changedMealTypes[mealId] || meal.mealTypes,
                 }
               : meal
           )
@@ -326,8 +277,7 @@ const MealItems: React.FC<MealItemsProps> = ({
               ? {
                   ...meal,
                   isActive: tempRowData.isActive,
-                  // mealTypes: changedMealTypes[mealId] || meal.mealTypes,
-                  mealTypes: selectedTypes,
+                  mealTypes: changedMealTypes[mealId] || meal.mealTypes,
                 }
               : meal
           )
@@ -359,7 +309,6 @@ const MealItems: React.FC<MealItemsProps> = ({
   // Handle toggling isActive status for each row
   const handleToggleIsActive = async (mealId: number) => {
     const result = await getCycleMeals(hospitalId, mealId);
-    console.log(result);
 
     if (result && result.cycleInfo.length > 0) {
       // If the meal is associated with cycles, show the modal
@@ -385,15 +334,6 @@ const MealItems: React.FC<MealItemsProps> = ({
 
       setEditRowId(mealId);
     }
-  };
-
-
-  const toggleMealStatus = (mealId: number) => {
-    setAllLocalMeals((prevMeals) =>
-      prevMeals.map((meal) =>
-        meal.Id === mealId ? { ...meal, isActive: !meal.isActive } : meal
-      )
-    );
   };
 
   const handleCloseModal = () => {
@@ -519,9 +459,17 @@ const MealItems: React.FC<MealItemsProps> = ({
                     <Select
                       name="served"
                       value={
-                        editRowId === meal.Id
-                          ? tempRowData?.["servedId"] ?? 0
-                          : meal["servedId"]
+                        servedOptions.some(
+                          (option) =>
+                            option.Id ===
+                            (editRowId === meal.Id
+                              ? tempRowData?.["servedId"] ?? 0
+                              : meal["servedId"])
+                        )
+                          ? editRowId === meal.Id
+                            ? tempRowData?.["servedId"] ?? ""
+                            : meal["servedId"]
+                          : ""
                       }
                       onChange={(e) =>
                         handleInputChange(
@@ -545,7 +493,7 @@ const MealItems: React.FC<MealItemsProps> = ({
                       name="description"
                       value={
                         editRowId === meal.Id
-                          ? tempRowData?.["description"] ?? "" // Allow empty values
+                          ? tempRowData?.["description"] ?? ""
                           : meal["description"] || ""
                       }
                       onChange={(e) =>
@@ -568,12 +516,31 @@ const MealItems: React.FC<MealItemsProps> = ({
                       fullWidth
                       value={
                         editRowId === meal.Id
-                          ? tempRowData?.mealTypes || [] // Ensure value is always an array
+                          ? tempRowData?.mealTypes || []
                           : normalizeMealTypeId(meal.mealTypes)
                       }
                       onChange={(e) => {
-                        const value = e.target.value as number[];
-                        handleMultiselectChange(meal.Id, value);
+                        const selectedMealTypes = e.target.value as number[];
+                        const previousTypes = previousMealTypes[meal.Id] || [];
+
+                        const removedTypes = previousTypes.filter(
+                          (type) => !selectedMealTypes.includes(type)
+                        );
+
+                        getMealTypes(hospitalId, meal.Id).then((response) => {
+                          const mealTypeCycles = response.filter((mt) =>
+                            removedTypes.includes(mt.mealTypeid)
+                          );
+
+                          if (mealTypeCycles.length > 0) {
+                            setConnectedCycles(
+                              mealTypeCycles.map((mt) => mt.cycleName)
+                            );
+                            setModalOpen(true);
+                          } else {
+                            handleMultiselectChange(meal.Id, selectedMealTypes);
+                          }
+                        });
                       }}
                       renderValue={(selected) =>
                         Array.isArray(selected) ? (
@@ -635,8 +602,15 @@ const MealItems: React.FC<MealItemsProps> = ({
               ))}
               {paginatedMeals.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={2} align="center">
-                    No data available
+                  <TableCell colSpan={6} align="center">
+                    <Message
+                      img={noDataImage}
+                      alt={"No Data Available"}
+                      title={"No Data Available"}
+                      style={{ flexDirection: "row", height: "50vh" }}
+                      imgWidth={"200px"}
+                      titleFontWeight={"medium"}
+                    />
                   </TableCell>
                 </TableRow>
               )}
@@ -644,7 +618,7 @@ const MealItems: React.FC<MealItemsProps> = ({
           </Table>
         </TableContainer>
         <Box>
-          <caption style={{ paddingTop: "3px" }}>
+          <div style={{ paddingTop: "3px" }}>
             <Button
               onClick={handleAddRow}
               sx={{
@@ -654,7 +628,7 @@ const MealItems: React.FC<MealItemsProps> = ({
             >
               <PlusCircleIcon className="size-6 text-[#FFB600]" />
             </Button>
-          </caption>
+          </div>
         </Box>
         <TablePagination
           rowsPerPageOptions={[20, 50, 100]}
@@ -684,35 +658,66 @@ const MealItems: React.FC<MealItemsProps> = ({
               transform: "translate(-50%, -50%)",
               bgcolor: "background.paper",
               boxShadow: 24,
-              p: 4,
+              p: 2,
               width: 400,
+              borderRadius: "5px",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <Typography variant="h6">Connected Cycles</Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
+            <Box
+              component="img"
+              src={connectedCyclesImage}
+              alt={"Connected Cycles Image"}
+            />
+            <p className="text-xl font-bold mb-2">Connected Meal Cycles</p>
+            <p className="text-sm fontLight">
               This meal is linked to the following cycles:
-            </Typography>
-            <ul>
+            </p>
+            <List>
               {connectedCycles.map((cycle, index) => (
-                <li key={index}>{cycle}</li>
+                <ListItem key={index}>
+                  <ListItemIcon>
+                    <CheckCircleIcon className="size-6 text-[#33cd33]" />
+                  </ListItemIcon>
+                  <p>{cycle}</p>
+                </ListItem>
               ))}
-            </ul>
-            <Typography variant="body2" sx={{ mt: 2 }}>
-              Please go to the Chef Special window to remove this item from the
-              cycles before marking it inactive.
-            </Typography>
-            <Button
+            </List>
+            <p className="text-sm fontLight">
+              To remove this meal or meal type, please go to the Chef Special
+              window and update the cycle before deactivating / deselecting it.
+            </p>
+            <CustomButton
+              color="error"
               onClick={handleCloseModal}
               variant="contained"
               sx={{ mt: 2 }}
             >
               Close
-            </Button>
+            </CustomButton>
           </Box>
         </Modal>
       </Paper>
     </div>
   );
 };
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: "#F6F6F6",
+    color: "#656565",
+    borderBottom: "none",
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "& td": {
+    borderBottom: "1px solid #F1F1F1",
+  },
+}));
 
 export default MealItems;

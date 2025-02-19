@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Button,
-  Box,
-} from "@mui/material";
+import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import { Modal, DialogActions, Button, Box } from "@mui/material";
 import {
   EditorState,
   convertToRaw,
@@ -14,7 +8,6 @@ import {
   convertFromRaw,
 } from "draft-js";
 import { Editor } from "react-draft-wysiwyg";
-import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import draftToHtml from "draftjs-to-html";
 
 interface WysiwygModalProps {
@@ -30,7 +23,6 @@ const WysiwygModal: React.FC<WysiwygModalProps> = ({
   setContent,
   content,
 }) => {
-
   const initialEditorState = content
     ? EditorState.createWithContent(convertFromRaw(JSON.parse(content)))
     : EditorState.createEmpty();
@@ -50,19 +42,9 @@ const WysiwygModal: React.FC<WysiwygModalProps> = ({
   }, [content]);
 
   const handleSave = () => {
-    //  const rawContent = convertToRaw(editorState.getCurrentContent());
-    //  const plainText = rawContent.blocks.map((block) => block.text).join("\n"); // Extract plain text
-    //  console.log(plainText);
-    //  setContent(plainText);
     const rawContent = convertToRaw(editorState.getCurrentContent());
-
     const markup = draftToHtml(rawContent);
-    console.log(markup);
     setContent(markup); // Store as stringified JSON
-    setOpen(false);
-  };
-
-  const handleClose = () => {
     setOpen(false);
   };
 
@@ -84,12 +66,7 @@ const WysiwygModal: React.FC<WysiwygModalProps> = ({
             editorClassName="wysiwyg-editor"
             onEditorStateChange={setEditorState}
             toolbar={{
-              options: [
-                "inline",
-                "list",
-                "textAlign",
-                "link",
-              ],
+              options: ["inline", "list", "textAlign", "link"],
               inline: { inDropdown: false },
               list: { inDropdown: true },
               textAlign: { inDropdown: true },

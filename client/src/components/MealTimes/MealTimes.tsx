@@ -8,9 +8,7 @@ import {
   TableHead,
   Paper,
   TableCell,
-  Button,
   tableCellClasses,
-  TablePagination,
   TextField,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -19,6 +17,9 @@ import { DesktopTimePicker } from "@mui/x-date-pickers/DesktopTimePicker";
 import { MealType } from "../../types";
 import dayjs, { Dayjs } from "dayjs";
 import { mergeMealTypeOverride, getMealTypeList } from "../../utils/db-utils";
+import noDataImage from "../Assets/noData.png";
+import { Message } from "../Global/Message";
+import { CustomButton } from "../Global/CustomButton";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -89,9 +90,11 @@ const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, setMealTypes }) => {
 
       setMealTypes((prev) =>
         prev.map((m) =>
-          m.Id === mealType.Id ? { ...m, name: name, mealTypeServedTime: time } : m
+          m.Id === mealType.Id
+            ? { ...m, name: name, mealTypeServedTime: time }
+            : m
         )
-      )
+      );
     } catch (error) {
       console.error("Error updating meal type:", error);
     }
@@ -131,6 +134,9 @@ const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, setMealTypes }) => {
                   Meal Type
                 </StyledTableCell>
                 <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
+                  Hospital Meal Type
+                </StyledTableCell>
+                <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
                   Served Time
                 </StyledTableCell>
                 <StyledTableCell width="33%" sx={{ fontFamily: "Poppins" }}>
@@ -141,6 +147,7 @@ const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, setMealTypes }) => {
             <TableBody>
               {localMealTypes.map((mt) => (
                 <StyledTableRow key={mt.Id}>
+                  <StyledTableCell>{mt.mealTypeNameGlobal}</StyledTableCell>
                   <StyledTableCell>
                     <TextField
                       name="mealType"
@@ -168,18 +175,32 @@ const MealTimes: React.FC<MealTimesProps> = ({ hospitalId, setMealTypes }) => {
                   </StyledTableCell>
                   <StyledTableCell>
                     {editedRow === mt.Id && (
-                      <Button
+                      <CustomButton
                         variant="contained"
                         size="small"
                         color="success"
                         onClick={() => handleSaveRow(mt)}
                       >
                         Save
-                      </Button>
+                      </CustomButton>
                     )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
+              {localMealTypes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Message
+                      img={noDataImage}
+                      alt={"No Data Available"}
+                      title={"No Data Available"}
+                      style={{ flexDirection: "row", height: "50vh" }}
+                      imgWidth={"200px"}
+                      titleFontWeight={"medium"}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>

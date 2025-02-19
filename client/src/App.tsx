@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from "react";
 import "./App.scss";
-import { Tabs, Tab } from "@mui/material";
+import "../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import { getHospitals, getMealTypeList, getMealsList } from "./utils/db-utils";
+import { Hospitals, Meal, MealType, MealDays, CalendarMeals } from "./types";
+import HospitalDropdown from "./Components/HospitalDropdown";
 import {
   ChefSpecialConfig,
   MealItems,
   WeeklyView,
   MealTimes,
   AlertsTable,
+  Message,
 } from "./Components";
-// import MealItems from "./Components/ChefSpecialItems/MealItems/MealItems";
-import {
-  getHospitals,
-  getMealTypeList,
-  getMealsList,
-  getCalendarMeals,
-} from "./utils/db-utils";
-import { Hospitals, Meal, MealType, MealDays, CalendarMeals } from "./types";
-import HospitalDropdown from "./Components/HospitalDropdown";
-import NoHospital  from "./Components/NoHospital";
-import { each } from "lodash";
-import "../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import { Tabs, Tab } from "@mui/material";
+import noHospitalImage from "./Components/Assets/noHospital.png";
 
 const App: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -106,7 +100,14 @@ const App: React.FC = () => {
       </Tabs>
       {selectedTab === 0 &&
         (hospitalId === null ? (
-          <NoHospital />
+          <Message
+            img={noHospitalImage}
+            alt={"No Site Selected"}
+            title={"No Site Selected"}
+            subtitle={"Choose a site in the navigation bar on top."}
+            imgWidth={"300px"}
+            titleFontWeight={"medium"}
+          />
         ) : showWeeklyView ? (
           <WeeklyView
             hospitalId={hospitalId}
@@ -125,7 +126,14 @@ const App: React.FC = () => {
 
       {selectedTab === 1 &&
         (hospitalId === null ? (
-          <NoHospital />
+          <Message
+            img={noHospitalImage}
+            alt={"No Site Selected"}
+            title={"No Site Selected"}
+            subtitle={"Choose a site in the navigation bar on top."}
+            imgWidth={"300px"}
+            titleFontWeight={"medium"}
+          />
         ) : (
           <MealItems
             allMeals={allMeals}
@@ -137,14 +145,28 @@ const App: React.FC = () => {
 
       {selectedTab === 2 &&
         (hospitalId === null ? (
-          <NoHospital />
+          <Message
+            img={noHospitalImage}
+            alt={"No Site Selected"}
+            title={"No Site Selected"}
+            subtitle={"Choose a site in the navigation bar on top."}
+            imgWidth={"300px"}
+            titleFontWeight={"medium"}
+          />
         ) : (
           <MealTimes hospitalId={hospitalId} setMealTypes={setMealTypes} />
         ))}
 
       {selectedTab === 3 &&
         (hospitalId === null ? (
-          <NoHospital />
+          <Message
+            img={noHospitalImage}
+            alt={"No Site Selected"}
+            title={"No Site Selected"}
+            subtitle={"Choose a site in the navigation bar on top."}
+            imgWidth={"300px"}
+            titleFontWeight={"medium"}
+          />
         ) : (
           <AlertsTable
             hospitalId={hospitalId}
@@ -155,7 +177,14 @@ const App: React.FC = () => {
 
       {selectedTab === 4 &&
         (hospitalId === null ? (
-          <NoHospital />
+          <Message
+            img={noHospitalImage}
+            alt={"No Site Selected"}
+            title={"No Site Selected"}
+            subtitle={"Choose a site in the navigation bar on top."}
+            imgWidth={"300px"}
+            titleFontWeight={"bold"}
+          />
         ) : (
           <AlertsTable
             hospitalId={hospitalId}

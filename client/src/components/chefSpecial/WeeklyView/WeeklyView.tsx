@@ -1,16 +1,7 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import {
-  format,
-  addDays,
-  subDays,
-  startOfWeek,
-  endOfWeek,
-  getISOWeek,
-  getDay,
-} from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
+import React, { useEffect, useState, useRef } from "react";
+import { styled } from "@mui/material/styles";
 import { getCalendarMeals } from "../../../utils/db-utils";
-import { CalendarMeals, MealEntry } from "../../../types";
+import { CalendarMeals } from "../../../types";
 import {
   TableContainer,
   Table,
@@ -21,13 +12,17 @@ import {
   TableCell,
   Button,
   tableCellClasses,
-  TextField,
-  tableRowClasses,
-  tableClasses,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import {
+  format,
+  addDays,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  getDay,
+} from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import {
   PrinterIcon,
@@ -35,37 +30,6 @@ import {
   ChevronRightIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
-
-const StyleTable = styled(Table)(() => ({
-  [`&.${tableClasses.root}`]: {
-    // fontFamily: "Poppins"
-  },
-}));
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: "#F6F6F6",
-    color: "#656565",
-    borderBottom: "none",
-    textTransform: "uppercase",
-    fontFamily: "Poppins",
-    padding: "10px 10px",
-    width: "calc(100%/8)",
-    lineHeight: "1.1rem",
-    border: "none",
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-    padding: "10px",
-    border: "1px solid #f2f2f2 !important",
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "& td": {
-    borderBottom: "1px solid #F1F1F1",
-  },
-}));
 
 // Meal Type Color Mapping
 const mealTypeColors: Record<string, string> = {
@@ -90,7 +54,6 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
   hospitalId,
   toggleWeeklyView,
 }) => {
-  console.log(typeof hospitalId);
   const today = new Date();
   const apiEndDate = addDays(today, 180); // 6 months from today
 
@@ -111,9 +74,6 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
 
     getCalendarMeals(hospitalId, formattedStart, formattedEnd)
       .then((data) => {
-        console.log("API Response:", data);
-        // setMeals(data || {});
-
         if (typeof data === "object") {
           // Ensure only valid meal entries are included
           const filteredMeals: CalendarMeals = Object.entries(data).reduce(
@@ -145,11 +105,10 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
         );
       })
       .catch((error) => console.error("Error fetching meals:", error));
-  }, []);
+  }, [apiEndDate, hospitalId]);
 
   // Get meals for a specific day & type
   const getMealForDay = (date: Date, mealTypeId: number) => {
-    console.log(meals);
     const dateKey = format(date, "yyyy-MM-dd");
     const dayMeals = meals[dateKey] || [];
 
@@ -162,12 +121,8 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
       ).values()
     );
 
-    // const mealList = dayMeals.find((m) => m.mealTypeId === mealTypeId);
-    // const mealList = dayMeals.filter((m) => m.mealTypeId === mealTypeId) || [];
-
     return uniqueMeals.length > 0
       ? uniqueMeals.map((meal, index) => (
-          // return meal ? (
           <div
             key={index}
             className="meal-box"
@@ -308,38 +263,9 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
             component={Paper}
             sx={{ marginTop: 2, minHeight: "75 vh" }}
           >
-            <StyleTable stickyHeader>
+            <Table stickyHeader>
               <TableHead>
-                {/* <TableRow>
-                  <TableCell sx={{ borderBottom: "0px" }}></TableCell>
-                  * Week *
-                  <TableCell
-                    align="center"
-                    colSpan={9}
-                    sx={{
-                      padding: "2px 16px",
-                      textTransform: "uppercase",
-                      color: "#656565 !important",
-                    }}
-                  >
-                    Week {getISOWeek(weekStart)}
-                  </TableCell>
-                </TableRow> */}
-                <TableRow>
-                  {/* <TableCell sx={{ borderBottom: "0px" }}></TableCell>
-                  * Month Year *
-                  <TableCell
-                    align="center"
-                    colSpan={9}
-                    sx={{
-                      padding: "2px 16px",
-                      textTransform: "uppercase",
-                      color: "#656565",
-                    }}
-                  >
-                    {format(weekStart, "MMMM yyyy")}
-                  </TableCell> */}
-                </TableRow>
+                <TableRow></TableRow>
                 <TableRow>
                   <StyledTableCell sx={{ borderBottom: "0px" }}>
                     Meal Types
@@ -371,7 +297,7 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
               </TableHead>
               <TableBody>
                 {mealTypes.map(({ id, name }) => (
-                  <TableRow key={id} sx={{ height: "130px" }}>
+                  <TableRow key={id} sx={{ height: "90px" }}>
                     <StyledTableCell>
                       <div style={{ display: "flex" }}>
                         <div>
@@ -394,14 +320,13 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
                     </StyledTableCell>
                     {[...Array(7)].map((_, i) => {
                       const day = addDays(weekStart, i);
-                      console.log(day);
                       const isWeekend = getDay(day) === 6 || getDay(day) === 0;
                       return (
                         <StyledTableCell
                           key={i}
                           style={{
                             border: "1px solid #ddd",
-                            padding: "30px 5px",
+                            padding: "5px 5px",
                             background: isWeekend ? "#fafafa" : "white",
                           }}
                         >
@@ -412,12 +337,31 @@ const WeeklyViewer: React.FC<WeeklyViewProps> = ({
                   </TableRow>
                 ))}
               </TableBody>
-            </StyleTable>
+            </Table>
           </TableContainer>
         </Paper>
       </div>
     </div>
   );
 };
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: "#F6F6F6",
+    color: "#656565",
+    borderBottom: "none",
+    textTransform: "uppercase",
+    fontFamily: "Poppins",
+    padding: "10px 10px",
+    width: "calc(100%/8)",
+    lineHeight: "1.1rem",
+    border: "none",
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+    padding: "10px",
+    border: "1px solid #f2f2f2 !important",
+  },
+}));
 
 export default WeeklyViewer;

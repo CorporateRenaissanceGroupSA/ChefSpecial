@@ -2,39 +2,6 @@ import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
 import { Meal, Option } from "../../../../types";
 
-const customStyles = {
-  menuPortal: (base: any) => ({
-    ...base,
-    zIndex: 9999,
-    "&:hover": {
-      backgroundColor: "#656565",
-    },
-  }),
-  control: (base: any, state: any) => ({
-    ...base,
-    border: "none",
-    color: "#656565",
-    borderColor: state.isFocused ? "#656565" : "#ccc",
-    "&:hover": {},
-    fontFamily: "Poppins",
-  }),
-  indicatorsContainer: (base: any) => ({
-    ...base,
-    borderLeft: "none",
-    fiil: "#656565",
-  }),
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-  dropdownIndicator: (base: any, state: any) => ({
-    ...base,
-    color: state.isFocused ? "#656565" : "#656565", // Chevron color
-    "&:hover": {
-      color: "#656565", // Chevron color on hover
-    },
-  }),
-};
-
 interface MealDropdownProps {
   allMeals: Meal[];
   selectedMeal: Meal | null;
@@ -52,6 +19,7 @@ function mealToOption(meal: Meal | null): Option | null {
   }
   return null;
 }
+
 // utility function to convert Option data to Meal data
 function optionToMeal(option: Option | null): Meal | null {
   if (!option || option.value === 0) {
@@ -90,8 +58,8 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
       .filter(
         (meal) =>
           Array.isArray(meal.mealTypes) &&
-          meal.mealTypes.includes(mealTypeId) && // Check if mealTypeId is in mealTypes array
-          meal.isActive === true // Filter by active items
+          meal.mealTypes.includes(mealTypeId) &&
+          meal.isActive === true
       )
       .map((meal) => mealToOption(meal))
       .filter((option): option is Option => option !== null);
@@ -113,16 +81,49 @@ const MealDropdown: React.FC<MealDropdownProps> = ({
       options={options}
       value={selectedOption}
       onChange={(selectedOption: SingleValue<Option>) => {
-        setSelectedOption(selectedOption); // Update local state
-        onChange(optionToMeal(selectedOption)); // Notify parent
+        setSelectedOption(selectedOption);
+        onChange(optionToMeal(selectedOption));
       }}
       styles={customStyles}
       menuPortalTarget={document.body} // Render dropdown menu outside of the table
-      menuPosition="fixed" // Ensure proper positioning
+      menuPosition="fixed" // Proper positioning
       placeholder="Choose Meal"
       isClearable
     />
   );
+};
+
+const customStyles = {
+  menuPortal: (base: any) => ({
+    ...base,
+    zIndex: 9999,
+    "&:hover": {
+      backgroundColor: "#656565",
+    },
+  }),
+  control: (base: any, state: any) => ({
+    ...base,
+    border: "none",
+    color: "#656565",
+    borderColor: state.isFocused ? "#656565" : "#ccc",
+    "&:hover": {},
+    fontFamily: "Poppins",
+  }),
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    borderLeft: "none",
+    fiil: "#656565",
+  }),
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+  dropdownIndicator: (base: any, state: any) => ({
+    ...base,
+    color: state.isFocused ? "#656565" : "#656565", // Chevron color
+    "&:hover": {
+      color: "#656565", // Chevron color on hover
+    },
+  }),
 };
 
 export default MealDropdown;

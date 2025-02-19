@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CycleDetails, MealTable } from "../ChefSpecial";
-// import CycleDetails from "../../Components/Specific/ChefSpecial/CycleDetails/CycleDetails";
-// import MealTable from "../../Components/Specific/ChefSpecial/MealTable/MealTable";
 import { SelectOption } from "./CycleDetails/CycleName/CycleName";
-import { CycleData, Meal, MealDays, MealType } from "../../types";
+import { CycleData, Meal, MealType } from "../../types";
 import {
   getCycleDetail,
   getCycleList,
@@ -35,6 +33,8 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
     1, 2, 3,
   ]);
   const [activeOnly, setActiveOnly] = useState(false);
+  const [editCycleName, setEditCycleName] = useState(false);
+  const [editedCycleName, setEditedCycleName] = useState<string | null>(null);
 
   useEffect(() => {
     if (hospitalId) {
@@ -129,6 +129,7 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
         mealTypeId: 0,
         mealTypes: [],
         mealTypeServedTime: "",
+        mealTypeNameGlobal: "",
         servedId: 0,
         served: "",
         itemIsActive: true,
@@ -141,6 +142,32 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
       }
     } else {
       existingCycleId = existingCycle.Id;
+
+      // if (existingCycle.name !== option.label) {
+      // console.log("Edit Cycle Name: ", editCycleName);
+      // if (editCycleName) {
+      //   console.warn("Updating cycle name:", option.label);
+
+      //   await mergeCycleInfo({
+      //     ...existingCycle,
+      //     name: option.label, // Updated name
+      //   });
+
+      //   // Refresh cycle data
+      //   existingCycle = await getCycleDetail(existingCycleId).then(
+      //     (detail) => detail?.cycleInfo
+      //   );
+
+      //   if (existingCycle) {
+      //     // Update allCycles with the new cycle name
+      //     setAllCycles((prev) =>
+      //       prev.map((cycle) =>
+      //         cycle.Id === existingCycle!.Id ? existingCycle! : cycle
+      //       )
+      //     );
+      //     setEditCycleName(false);
+      //   }
+      // }
     }
 
     if (existingCycle) {
@@ -187,6 +214,38 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
       console.error("Unable to find or create cycle");
     }
   };
+
+  useEffect(() => {
+    if (editCycleName && currentCycle) {
+      console.warn("Updating cycle name:", editedCycleName);
+
+      (async () => {
+        await mergeCycleInfo({
+          ...currentCycle,
+          name: editedCycleName, // Updated name
+        });
+
+        const updatedCycle = await getCycleDetail(currentCycle.Id).then(
+          (detail) => detail?.cycleInfo
+        );
+
+        if (updatedCycle) {
+          setAllCycles((prev) =>
+            prev.map((cycle) =>
+              cycle.Id === updatedCycle!.Id ? updatedCycle! : cycle
+            )
+          );
+          setEditCycleName(false); // Reset state after update
+          setEditedCycleName(null);
+
+          setCurrentCycle(updatedCycle);
+          console.log("set LocalStorage existing");
+          localStorage.setItem("selectedCycle", JSON.stringify(updatedCycle)); // Persist selected cycle
+        }
+      })();
+    }
+  }, [editCycleName]); // Run when editCycleName changes
+
   const handleCycleDataChange = async (field: string, value: any) => {
     console.log("Handling cycle data change", field, value);
     const newCycleData: any = { ...currentCycle, [field]: value };
@@ -208,9 +267,12 @@ const ChefSpecialConfig: React.FC<ChefSpecialConfigProps> = ({
         selectedMealTypes={selectedMealTypes}
         setSelectedMealTypes={setSelectedMealTypes}
         activeOnly={activeOnly}
-        setActiveOnly={setActiveOnly} // Pass setter to update activeOnly
+        setActiveOnly={setActiveOnly}
         hospitalId={hospitalId}
         toggleWeeklyView={toggleWeeklyView}
+        editCycleName={editCycleName}
+        setEditCycleName={setEditCycleName}
+        setEditedCycleName={setEditedCycleName}
       />
       {currentCycle && selectedMealTypes.length > 0 && (
         <div>

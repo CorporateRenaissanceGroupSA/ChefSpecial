@@ -38,9 +38,9 @@ export function startApi(port: number) {
     const queryStr = `
     SELECT DISTINCT(H.Id), H.Name as hospitalName 
     FROM dbo.HospitalPortfolio as HP
-    LEFT JOIN dbo.Hospital as H ON H.Id = HP.Hospital
-    LEFT JOIN dbo.Portfolio as P ON P.Id = HP.Portfolio
-    LEFT JOIN dbo.ServiceGroup as SG ON SG.Id = P.ServiceGroup
+    JOIN dbo.Hospital as H ON H.Id = HP.Hospital AND H.isActive = 'true'
+    JOIN dbo.Portfolio as P ON P.Id = HP.Portfolio AND P.isActive = 'true'
+    JOIN dbo.ServiceGroup as SG ON SG.Id = P.ServiceGroup
     WHERE SG.Service = 'Catering' AND HP.UserName = ${reqData.userId} and HP.isActive = 'true'
     ;
     `;
