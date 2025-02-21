@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   FormControl,
   InputLabel,
@@ -28,22 +28,24 @@ const CycleMealType: React.FC<cycleMealTypeProps> = ({
   setSelected,
   hospitalId,
 }) => {
-  console.log(options)
   const handleChange = (event: SelectChangeEvent<number[]>) => {
     const {
       target: { value },
     } = event;
     setSelected(
-      typeof value === "string" ? value.split(",").map(Number) : (value as number[])
+      typeof value === "string"
+        ? value.split(",").map(Number)
+        : (value as number[])
     );
   };
 
   return (
-    <FormControl variant="filled" fullWidth disabled={hospitalId? false : true}>
-      <InputLabel
-      >
-        {label}
-      </InputLabel>
+    <FormControl
+      variant="filled"
+      disabled={hospitalId ? false : true}
+      style={{ width: 250 }}
+    >
+      <InputLabel>{label}</InputLabel>
       <Select
         disableUnderline
         multiple

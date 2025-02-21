@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { Message } from "../../Global/Message";
+import { CustomButton } from "../../Global/CustomButton";
+import WysiwygModal from "../WysiwygModal/WysiwygModal";
+import { mergeNotes, getNotes } from "../../../utils/db-utils";
+import { Notes } from "../../../types";
+import noDataImage from "../../Assets/noData.png";
 import { styled } from "@mui/material/styles";
 import {
   TableContainer,
@@ -8,35 +14,17 @@ import {
   TableHead,
   Paper,
   TableCell,
-  Button,
   tableCellClasses,
   TablePagination,
-  TextField,
   Switch,
   Box,
-  FormControlLabel,
-  Checkbox,
-  RadioGroup,
-  Radio,
-  FormControl,
 } from "@mui/material";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import WysiwygModal from "../WysiwygModal/WysiwygModal";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import dayjs, { Dayjs } from "dayjs";
-import { mergeNotes, getNotes } from "../../../utils/db-utils";
-import { Notes } from "../../../types";
-// import draftToHtml from "draftjs-to-html";
-import htmlToDraft from "html-to-draftjs";
-import {
-  ContentState,
-  EditorState,
-  convertFromHTML,
-  convertFromRaw,
-  convertToRaw,
-} from "draft-js";
+import { ContentState, convertFromHTML, convertToRaw } from "draft-js";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -61,7 +49,11 @@ interface AlertsTableProps {
   noteType: string;
 }
 
-const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType }) => {
+const AlertsTable: React.FC<AlertsTableProps> = ({
+  hospitalId,
+  userId,
+  noteType,
+}) => {
   const [notes, setNotes] = useState<Notes[]>([]);
   const [localNotes, setLocalNotes] = useState<Record<number | null, Notes>>(
     {}
@@ -69,10 +61,12 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
   const [editRowId, setEditRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editorContent, setEditorContent] = useState("");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [cleared, setCleared] = React.useState(false);
 
   useEffect(() => {
     if (hospitalId) {
-      console.log(noteType);
       const fetchNotes = async () => {
         try {
           const fetchedNotes = await getNotes(hospitalId, noteType);
@@ -85,8 +79,6 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
       };
       fetchNotes();
     }
-
-    // setCycleName(null);
   }, [hospitalId, noteType]);
 
   const handleAddRow = () => {
@@ -108,7 +100,6 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
     field: string,
     value: string | boolean | Dayjs
   ) => {
-    console.log(field, value);
     setNotes(
       notes.map((note) => (note.Id === id ? { ...note, [field]: value } : note))
     );
@@ -132,7 +123,7 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
         note.endDate ? dayjs(note.endDate).format("YYYY-MM-DD") : null,
         userId,
         note.isActive,
-        note.noteType,
+        note.noteType
       );
       console.log("Note saved successfully");
 
@@ -145,7 +136,23 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
     setEditRowId(null);
   };
 
-  const [cleared, setCleared] = React.useState(false);
+  // Handle pagination
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Paginate the notes
+  const paginatedMeals = notes.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <div className="px-3">
@@ -182,42 +189,13 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
               </TableRow>
             </TableHead>
             <TableBody>
-              {notes.map((note) => (
+              {paginatedMeals.map((note) => (
                 <StyledTableRow key={note.Id}>
                   <StyledTableCell>
-                    {/* <TextField
-                      value={note.note}
-                      onClick={() => {
-                        setModalOpen(true);
-                        setEditRowId(note.Id);
-                        console.log(note.note);
-                        setEditorContent(note.note);
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                    /> */}
                     <div
                       onClick={() => {
                         setModalOpen(true);
                         setEditRowId(note.Id);
-                        // setEditorContent(note.note);
-
-                        // const contentBlock = htmlToDraft(note.note || "");
-                        // const plainText = contentBlock.contentBlocks
-                        //   .map((block) => block.getText())
-                        //   .join("\n");
-                        // setEditorContent(plainText);
-
-                        // const blocksFromHTML = convertFromHTML(note.note || "");
-                        // const contentState = ContentState.createFromBlockArray(
-                        //   blocksFromHTML.contentBlocks,
-                        //   blocksFromHTML.entityMap
-                        // );
-                        // const editorState =
-                        //   EditorState.createWithContent(contentState);
-
-                        // setEditorContent(editorState); // Pass editorState to modal
 
                         if (note.note) {
                           // Convert stored HTML back to DraftJS content state
@@ -233,9 +211,9 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
                             convertToRaw(contentState)
                           );
 
-                          setEditorContent(rawContent); // Store as a string
+                          setEditorContent(rawContent);
                         } else {
-                          setEditorContent(""); // Handle empty case
+                          setEditorContent("");
                         }
                       }}
                       style={{
@@ -247,10 +225,8 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
                         cursor: "pointer",
                         backgroundColor: "#fff",
                       }}
-                      dangerouslySetInnerHTML={{ __html: note.note || "" }} // Render HTML content
-                    >
-                      {/* {note.note}{" "} */}
-                    </div>
+                      dangerouslySetInnerHTML={{ __html: note.note || "" }}
+                    ></div>
                   </StyledTableCell>
                   <StyledTableCell>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -271,9 +247,6 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
                             onClear: () => setCleared(true),
                           },
                         }}
-                        // renderInput={(params: any) => (
-                        //   <TextField {...params} size="small" fullWidth />
-                        // )}
                       />
                     </LocalizationProvider>
                   </StyledTableCell>
@@ -298,9 +271,6 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
                             onClear: () => setCleared(true),
                           },
                         }}
-                        // renderInput={(params: any) => (
-                        //   <TextField {...params} size="small" fullWidth />
-                        // )}
                       />
                     </LocalizationProvider>
                   </StyledTableCell>
@@ -324,24 +294,38 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
                   </StyledTableCell>
                   <StyledTableCell>
                     {editRowId === note.Id && (
-                      <Button
+                      <CustomButton
                         color="success"
                         variant="contained"
                         size="small"
                         onClick={() => handleSaveRow(note.Id)}
                       >
                         Save
-                      </Button>
+                      </CustomButton>
                     )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
+              {paginatedMeals.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Message
+                      img={noDataImage}
+                      alt={"No Data Available"}
+                      title={"No Data Available"}
+                      style={{ flexDirection: "row", height: "50vh" }}
+                      imgWidth={"200px"}
+                      titleFontWeight={"medium"}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
         <Box>
-          <caption style={{ paddingTop: "3px" }}>
-            <Button
+          <div style={{ paddingTop: "3px" }}>
+            <CustomButton
               color="success"
               onClick={handleAddRow}
               sx={{
@@ -350,9 +334,23 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ hospitalId, userId, noteType 
               }}
             >
               <PlusCircleIcon className="size-6 text-[#FFB600]" />
-            </Button>
-          </caption>
+            </CustomButton>
+          </div>
         </Box>
+        <TablePagination
+          rowsPerPageOptions={[20, 50, 100]}
+          component="div"
+          count={notes.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{
+            "& .MuiTablePagination-toolbar": {
+              minHeight: "40px",
+            },
+          }}
+        />
       </Paper>
       <WysiwygModal
         open={modalOpen}

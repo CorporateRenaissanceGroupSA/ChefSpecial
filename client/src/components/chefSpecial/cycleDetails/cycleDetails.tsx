@@ -1,139 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { CycleData, MealType } from "../../../types";
-import { ViewColumnsIcon } from "@heroicons/react/24/outline";
-// import TextField from "@mui/material/TextField";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import dayjs, { Dayjs } from "dayjs";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CycleName, { SelectOption } from "./CycleName/CycleName";
 import CycleMealType from "./CycleMealType/CycleMealType";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { ViewColumnsIcon } from "@heroicons/react/24/outline";
+import dayjs, { Dayjs } from "dayjs";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import FormControlLabel from "@mui/material/FormControlLabel";
-// import Switch from "@mui/material/Switch";
-import { getCycleList } from "../../../utils/db-utils";
 import { Button, TextField, Switch } from "@mui/material";
-
-const dateFieldTheme = (theme: any) =>
-  createTheme({
-    ...theme,
-    components: {
-      MuiStack: {
-        // root
-        styleOverrides: {
-          root: {
-            paddingTop: "0px !important",
-            overflow: "revert !important",
-          },
-        },
-      },
-      MuiTextField: {
-        styleOverrides: {
-          root: {
-            borderRadius: "5px",
-            border: "none",
-            borderLeft: "3px solid #FFB600",
-            backgroundColor: "#F6F6F6",
-            boxShadow: "0 1px 4px 0px rgba(0, 0, 0, 0.16)",
-          },
-        },
-      },
-      // label
-      MuiFormLabel: {
-        styleOverrides: {
-          root: {
-            transform: "translate(14px, 0px) scale(0.75) !important",
-            marginTop: "5px !important",
-            fontFamily: "Poppins",
-            left: "-4px !important",
-            color: "#808080 !important",
-          },
-        },
-      },
-      MuiOutlinedInput: {
-        styleOverrides: {
-          notchedOutline: {
-            border: "none",
-          },
-        },
-      },
-      // input
-      MuiInputBase: {
-        styleOverrides: {
-          input: {
-            fontFamily: "Poppins",
-            padding: "25px 10px 5px !important",
-          },
-        },
-      },
-      // calendar icon
-      MuiSvgIcon: {
-        styleOverrides: {
-          root: {
-            fill: "#ccc",
-          },
-        },
-      },
-      MuiInputAdornment: {
-        styleOverrides: {
-          root: {
-            paddingTop: "10px !important",
-          },
-        },
-      },
-      // Date Calendar
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            boxShadow: "none !important",
-            fontFamily: "Poppins !important",
-          },
-        },
-      },
-      MuiDateCalendar: {
-        styleOverrides: {
-          root: {
-            borderRadius: "10px",
-            boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px !important",
-          },
-        },
-      },
-      MuiSelect: {
-        styleOverrides: {
-          nativeInput: {
-            fontFamily: "Poppins !important",
-          },
-        },
-      },
-    },
-  });
-
-const inputFieldTheme = (theme: any) =>
-  createTheme({
-    ...theme,
-    components: {
-      MuiInputBase: {
-        styleOverrides: {
-          root: {
-            borderRadius: "5px !important",
-            border: "none",
-            borderLeft: "3px solid #FFB600",
-            backgroundColor: "#F6F6F6 !important",
-            boxShadow: "0 1px 4px 0px rgba(0, 0, 0, 0.16)",
-          },
-        },
-      },
-      MuiFormLabel: {
-        styleOverrides: {
-          root: {
-            fontFamily: "Poppins",
-            top: "-3px !important",
-          },
-        },
-      },
-    },
-  });
 
 interface CycleDetailsProps {
   allCycles: CycleData[];
@@ -147,14 +23,26 @@ interface CycleDetailsProps {
   setActiveOnly: (value: boolean) => void;
   hospitalId: number;
   toggleWeeklyView: () => void;
+  editCycleName: boolean;
+  setEditCycleName: (editCycleName: boolean) => void;
+  setEditedCycleName: (editedCycleName: string | null) => void;
 }
 
-function cycleToOption(cycleData: CycleData | undefined): SelectOption | null {
+function cycleToOption(
+  cycleData: CycleData | undefined,
+  cycleNameValue?: boolean | undefined
+): SelectOption | null {
+  console.log(cycleData?.name);
   if (cycleData) {
-    // Format dates to DD/MM/YYYY
-    const formattedStartDate = cycleData.startDate
-      ? dayjs(cycleData.startDate).format("DD/MM/YYYY")
-      : "N/A";
+    if (cycleNameValue) {
+      return {
+        label: cycleData.name,
+        value: cycleData!.Id.toString(),
+      };
+    }
+      const formattedStartDate = cycleData.startDate
+        ? dayjs(cycleData.startDate).format("DD/MM/YYYY")
+        : "N/A";
     const formattedEndDate = cycleData.endDate
       ? dayjs(cycleData.endDate).format("DD/MM/YYYY")
       : "N/A";
@@ -177,22 +65,24 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
   setSelectedMealTypes,
   selectedMealTypes,
   activeOnly,
-  setActiveOnly, // Pass setter to update activeOnly
+  setActiveOnly,
   hospitalId,
   toggleWeeklyView,
+  editCycleName,
+  setEditCycleName,
+  setEditedCycleName,
 }) => {
   const [allCycleOptions, setAllCycleOptions] = useState<SelectOption[]>([]);
   const [currentCycleOption, setCurrentCycleOption] =
     useState<SelectOption | null>(null);
-
   const [startDate, setStartDate] = useState<Dayjs | null>(
     currentCycle?.startDate ? dayjs(currentCycle.startDate) : null
   );
   const [endDate, setEndDate] = useState<Dayjs | null>(
     currentCycle?.endDate ? dayjs(currentCycle.endDate) : null
   );
-
   const [cleared, setCleared] = React.useState(false);
+  const [cycleNameValue, setCycleNameValue] = React.useState(false);
 
   useEffect(() => {
     let newOptions = allCycles.map(
@@ -204,12 +94,13 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
 
   useEffect(() => {
     console.log("Changing current cycle option: ", currentCycle);
-    setCurrentCycleOption(cycleToOption(currentCycle));
+    setCycleNameValue(true);
+    setCurrentCycleOption(cycleToOption(currentCycle, cycleNameValue));
     if (currentCycle?.startDate) setStartDate(dayjs(currentCycle.startDate));
     if (currentCycle?.endDate) {
       setEndDate(dayjs(currentCycle.endDate));
     } else {
-      setEndDate(null); // Reset endDate if currentCycle does not have one
+      setEndDate(null);
     }
 
     if (!currentCycle) {
@@ -220,10 +111,17 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
   const handleCycleInputChange = (option: SelectOption | null) => {
     console.log("Detected cycle option change: ", option);
     appCycleSelect(option);
+    setCycleNameValue(true);
+    // setCurrentCycleOption(cycleToOption(currentCycle, cycleNameValue));
+    // setCurrentCycleOption(option);
+  };
+
+  const handleCycleOptionsChange = (updatedOptions: SelectOption[]) => {
+    console.log("Updated cycle options: ", updatedOptions);
+    setAllCycleOptions(updatedOptions);
   };
 
   const handleInputChange = (field: string, value: any) => {
-    // setCycleData((prev) => ({ ...prev, [field]: value }));
     console.log("Cycle data change: Field: " + field + " Value: " + value);
     appCycleDataChange(field, value);
   };
@@ -256,8 +154,8 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
 
   return (
     <div>
-      <div className="grid grid-cols-12 space-x-3 p-1">
-        <div className="col-span-1 flex">
+      <div className="flex flex-row space-x-3 p-1">
+        <div className="flex basis-32">
           <FormControlLabel
             label={`${activeOnly ? "Show" : "Hide"} Inactive Cycles`}
             control={
@@ -282,19 +180,23 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
             }}
           />
         </div>
-        <div className="col-span-3 ">
+        <div className="basis-4/12">
           <CycleName
             options={allCycleOptions}
             value={currentCycleOption}
             onChange={(newOption) => {
+              console.log("NEW OPTION", newOption);
               handleCycleInputChange(newOption);
             }}
             placeholder="Cycle Name"
             hospitalId={hospitalId}
+            editCycleName={editCycleName}
+            setEditCycleName={setEditCycleName}
+            setEditedCycleName={setEditedCycleName}
           />
         </div>
 
-        <div className="col-span-2">
+        <div className="basis-64">
           <ThemeProvider theme={inputFieldTheme}>
             <CycleMealType
               options={mealTypes}
@@ -305,11 +207,11 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-2 flex justify-end">
+        <div className=" flex justify-end basis-52">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                disabled={hospitalId ? false : true}
+                disabled={!hospitalId}
                 defaultValue={dayjs(
                   currentCycle?.startDate || new Date().toJSON()
                 )}
@@ -320,16 +222,17 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                 }}
                 label="Cycle Start Date"
                 format="DD/MM/YYYY"
+                maxDate={endDate}
               />
             </LocalizationProvider>
           </ThemeProvider>
         </div>
 
-        <div className="col-span-2">
+        <div className="basis-52">
           <ThemeProvider theme={dateFieldTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                disabled={hospitalId ? false : true}
+                disabled={!hospitalId}
                 onChange={(date: Dayjs | null) => {
                   setEndDate(date);
                   handleInputChange(
@@ -338,6 +241,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                   );
                 }}
                 value={endDate}
+                minDate={startDate}
                 slotProps={{
                   field: { clearable: true, onClear: () => setCleared(true) },
                 }}
@@ -348,9 +252,10 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
           </ThemeProvider>
         </div>
 
-        <div className="col-span-1">
+        <div className="basis-32">
           <ThemeProvider theme={inputFieldTheme}>
             <TextField
+              fullWidth
               id="filled-number"
               label="Days in Cycle"
               type="number"
@@ -362,7 +267,7 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                   e.target.value ? Number(e.target.value) : 0
                 )
               }
-              value={currentCycle?.cycleDays}
+              value={currentCycle?.cycleDays ?? 0}
               InputProps={{ inputProps: { min: 0, max: 21 } }}
               slotProps={{
                 inputLabel: {
@@ -383,22 +288,21 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
                   },
                 },
                 "& .MuiInputLabel-root": {
-                  color: "#808080", // Default label color
+                  color: "#808080",
                 },
                 "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#808080", // Focused label color
+                  color: "#808080",
                 },
               }}
             />
           </ThemeProvider>
         </div>
 
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center basis-8">
           <Button
             disabled={hospitalId ? false : true}
             onClick={toggleWeeklyView}
             sx={{
-              minWidth: "24px",
               padding: 0,
               "&:hover": { backgroundColor: "transparent" },
             }}
@@ -410,11 +314,134 @@ const CycleDetails: React.FC<CycleDetailsProps> = ({
           </Button>
         </div>
       </div>
-      {/* {cycleData.meals.length > 0 && ( */}
-
-      {/* )} */}
     </div>
   );
 };
+
+const dateFieldTheme = createTheme({
+  components: {
+    MuiStack: {
+      // root
+      styleOverrides: {
+        root: {
+          paddingTop: "0px !important",
+          overflow: "revert !important",
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          borderRadius: "5px",
+          border: "none",
+          borderLeft: "3px solid #FFB600",
+          backgroundColor: "#F6F6F6",
+          boxShadow: "0 1px 4px 0px rgba(0, 0, 0, 0.16)",
+          height: "56px",
+        },
+      },
+    },
+    // label
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          transform: "translate(14px, 0px) scale(0.75) !important",
+          marginTop: "5px !important",
+          fontFamily: "Poppins",
+          left: "-4px !important",
+          color: "#808080 !important",
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        notchedOutline: {
+          border: "none",
+        },
+      },
+    },
+    MuiFilledInput: {
+      styleOverrides: {
+        input: {
+          fontFamily: "Poppins !important",
+        },
+      },
+    },
+    // input
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          height: "56px",
+        },
+        input: {
+          fontFamily: "Poppins",
+          padding: "25px 10px 5px !important",
+        },
+      },
+    },
+    // calendar icon
+    MuiSvgIcon: {
+      styleOverrides: {
+        root: {
+          fill: "#ccc",
+        },
+      },
+    },
+    MuiInputAdornment: {
+      styleOverrides: {
+        root: {
+          paddingTop: "10px !important",
+        },
+      },
+    },
+    // Date Calendar
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: "none !important",
+          fontFamily: "Poppins !important",
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        filled: {
+          fontFamily: "Poppins !important",
+        },
+      },
+    },
+  },
+});
+
+const inputFieldTheme = createTheme({
+  components: {
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          borderRadius: "5px !important",
+          border: "none",
+          borderLeft: "3px solid #FFB600",
+          backgroundColor: "#F6F6F6 !important",
+          boxShadow: "0 1px 4px 0px rgba(0, 0, 0, 0.16)",
+        },
+      },
+    },
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: "Poppins",
+          top: "-3px !important",
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        select: {
+          fontFamily: "Poppins !important",
+        },
+      },
+    },
+  },
+});
 
 export default CycleDetails;

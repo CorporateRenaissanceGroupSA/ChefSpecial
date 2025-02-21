@@ -12,6 +12,7 @@ export interface MealType {
   Id: number;
   name: string;
   mealTypeServedTime: string;
+  mealTypeNameGlobal: string
 }
 
 export interface SelectedMealTypeData {
@@ -36,7 +37,7 @@ export interface MealDays {
 
 export interface CycleData {
   Id: number;
-  hospitalId: number;
+  hospitalId?: number;
   name: string;
   cycleDays: number;
   startDate: string;
@@ -48,6 +49,7 @@ export interface CycleData {
   mealTypeId: number;
   mealTypes: number | number[];
   mealTypeServedTime: string;
+  mealTypeNameGlobal: string;
   servedId: number;
   served: string;
   itemIsActive: boolean;
@@ -98,4 +100,11 @@ export interface Notes {
   createdBy: number;
   isActive: boolean;
   noteType: string;
+}
+
+export interface MealTypes {
+  mealTypeid: number;
+  mealTypeName: string;
+  cycleId: number;
+  cycleName: string;
 }
