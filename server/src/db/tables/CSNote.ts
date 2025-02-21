@@ -10,10 +10,10 @@ export const createCSNoteTableQueryStr = `
       hospitalId int not null REFERENCES dbo.Hospital(Id),
       noteType varchar(50) not null,
       note text not null,
-      startDate date not null,
-      endDate date,
+      startDate datetime not null,
+      endDate datetime,
       createdBy int not null REFERENCES dbo.users(Id),
-      createdAt date DEFAULT GETDATE(),
+      createdAt datetime DEFAULT GETDATE(),
       isActive bit not null,
     );
   END
